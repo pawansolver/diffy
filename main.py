@@ -14,7 +14,7 @@ from fastmcp import FastMCP
 from fastmcp.server.providers.skills import SkillsDirectoryProvider
 from starlette.applications import Starlette
 from starlette.requests import Request
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, PlainTextResponse
 from starlette.routing import Route, Mount
 import uvicorn
 
@@ -278,11 +278,11 @@ async def health_endpoint(request: Request):
 
 
 async def get_base_instruction_endpoint(request: Request):
-    """Returns the full base system instruction for Dify's system prompt.
-    Dify HTTP node calls GET /get-base-instruction and injects
-    {{#http_node.body.instruction#}} into the Agent/LLM system prompt.
+    """Returns the full base system instruction as plain text for Dify's system prompt.
+    Dify HTTP node calls GET /get-base-instruction.
+    Select {x}body in the LLM SYSTEM prompt — it directly contains the instruction text.
     """
-    return JSONResponse({"instruction": BASE_SYSTEM_INSTRUCTION})
+    return PlainTextResponse(BASE_SYSTEM_INSTRUCTION)
 
 
 def run_http_server(config_file: str, port: int, gateway_url: str = None):
