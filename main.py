@@ -12,6 +12,11 @@ from typing import Any, Dict, List, Optional
 import httpx
 from fastmcp import FastMCP
 from fastmcp.server.providers.skills import SkillsDirectoryProvider
+from starlette.applications import Starlette
+from starlette.requests import Request
+from starlette.responses import JSONResponse
+from starlette.routing import Route, Mount
+import uvicorn
 
 from config import ConfigLoader, GithubConfig
 
@@ -244,58 +249,97 @@ class SkillsProviderServer:
             sys.exit(1)
 
 
+# ─── Base System Instruction (served via /get-base-instruction) ───────────────
+BASE_SYSTEM_INSTRUCTION = """\
+You are an intelligent AI assistant with access to a dynamic skills library via MCP tools.
+
+You have 3 tools available:
+1. list_skills — Use this to discover all available skills
+2. get_skill — Use this to retrieve detailed instructions for a specific skill
+3. list_skill_files — Use this to see all files within a skill
+
+## How to use skills:
+- When a user asks something that matches a skill topic, FIRST call list_skills to see what skills are available
+- Then call get_skill with the relevant skill name to load the full instructions
+- Follow the skill's instructions precisely when responding
+
+## Behavior Rules:
+- Always check available skills before answering complex questions
+- If a relevant skill exists, follow its exact instructions and output format
+- If no skill matches, answer using your general knowledge
+- Never make up skill names — only use skills returned by list_skills tool
+- Always respond in the same language the user is writing in
+""".strip()
+
+
+async def health_endpoint(request: Request):
+    """Health check endpoint"""
+    return JSONResponse({"status": "ok", "message": "Skills MCP Server is running"})
+
+
+async def get_base_instruction_endpoint(request: Request):
+    """Returns the full base system instruction for Dify's system prompt.
+    Dify HTTP node calls GET /get-base-instruction and injects
+    {{#http_node.body.instruction#}} into the Agent/LLM system prompt.
+    """
+    return JSONResponse({"instruction": BASE_SYSTEM_INSTRUCTION})
+
+
 def run_http_server(config_file: str, port: int, gateway_url: str = None):
-    """Run MCP server with HTTP transport for gateway"""
+    """Run MCP server with HTTP transport for gateway.
+    Also serves /health and /get-base-instruction for Dify integration.
+    """
     server_instance = SkillsProviderServer(config_file)
 
-    logger.info(f"Starting FastMCP Skills Provider with sse transport")
+    logger.info(f"Starting FastMCP Skills Provider with streamable-http transport")
     logger.info(f"Port: {port}")
-    logger.info(f"Endpoint: http://localhost:{port}/sse")
-    logger.info(f"Tools configured:")
-    logger.info(f"  - list_skills: List all available skills")
-    logger.info(f"  - get_skill: Get skill content by name")
-    logger.info(f"  - list_skill_files: List all files in a skill")
-    logger.info(
-        f"Register with gateway: transport=streamable-http, url=http://localhost:{port}/mcp"
-    )
+    logger.info(f"Endpoint: http://0.0.0.0:{port}/mcp")
+    logger.info(f"Instruction API: http://0.0.0.0:{port}/get-base-instruction")
+    logger.info(f"Health check:    http://0.0.0.0:{port}/health")
 
     # Start heartbeat thread to keep server visible to gateway
     config_loader = ConfigLoader(config_file)
     gateway_config = config_loader.get_gateway_config()
     if gateway_config.enabled:
         gateway_host = gateway_config.host or "localhost"
-        gateway_port = gateway_config.port or 8000
+        gateway_port_num = gateway_config.port or 8000
         server_name = gateway_config.name or "skills-provider"
 
         def heartbeat_loop():
             """Send periodic heartbeats to the gateway"""
-            gateway_url = f"http://{gateway_host}:{gateway_port}/heartbeat"
+            gw_url = f"http://{gateway_host}:{gateway_port_num}/heartbeat"
             while True:
                 try:
-                    # Send heartbeat every 15 seconds (well under 30 second timeout)
                     response = httpx.get(
-                        gateway_url, params={"server_name": server_name}, timeout=5.0
+                        gw_url, params={"server_name": server_name}, timeout=5.0
                     )
                     if response.status_code == 200:
                         logger.debug(f"Heartbeat sent to gateway ({server_name})")
                     else:
-                        logger.warning(
-                            f"Gateway heartbeat failed: {response.status_code}"
-                        )
+                        logger.warning(f"Gateway heartbeat failed: {response.status_code}")
                 except Exception as e:
                     logger.warning(f"Heartbeat error: {e}")
                 finally:
-                    time.sleep(15)  # Send heartbeat every 15 seconds
+                    time.sleep(15)
 
-        # Start heartbeat thread as daemon so it doesn't block server shutdown
         heartbeat_thread = threading.Thread(target=heartbeat_loop, daemon=True)
         heartbeat_thread.start()
-        logger.info(
-            f"Heartbeat thread started (gateway: {gateway_host}:{gateway_port}, server: {server_name})"
-        )
+        logger.info(f"Heartbeat thread started (gateway: {gateway_host}:{gateway_port_num})")
 
-    # Use streamable-http transport which is compatible with MCP gateways
-    server_instance.mcp.run(transport="streamable-http", host="0.0.0.0", port=port)
+    # Build combined Starlette app:
+    # - /health and /get-base-instruction are custom routes
+    # - everything else is handled by FastMCP's ASGI app
+    mcp_asgi_app = server_instance.mcp.http_app(path="/mcp")
+
+    combined_app = Starlette(
+        routes=[
+            Route("/health", health_endpoint, methods=["GET"]),
+            Route("/get-base-instruction", get_base_instruction_endpoint, methods=["GET"]),
+            Mount("/", app=mcp_asgi_app),
+        ]
+    )
+
+    uvicorn.run(combined_app, host="0.0.0.0", port=port)
 
 
 def main():
