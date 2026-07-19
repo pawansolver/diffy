@@ -12,10 +12,8 @@ from typing import Any, Dict, List, Optional
 import httpx
 from fastmcp import FastMCP
 from fastmcp.server.providers.skills import SkillsDirectoryProvider
-from starlette.applications import Starlette
 from starlette.requests import Request
 from starlette.responses import JSONResponse, PlainTextResponse
-from starlette.routing import Route, Mount
 import uvicorn
 
 from config import ConfigLoader, GithubConfig
@@ -326,20 +324,17 @@ def run_http_server(config_file: str, port: int, gateway_url: str = None):
         heartbeat_thread.start()
         logger.info(f"Heartbeat thread started (gateway: {gateway_host}:{gateway_port_num})")
 
-    # Build combined Starlette app:
-    # - /health and /get-base-instruction are custom routes
-    # - everything else is handled by FastMCP's ASGI app
-    mcp_asgi_app = server_instance.mcp.http_app(path="/mcp")
+    # Get FastMCP's own Starlette app and inject our custom routes into it
+    # This preserves all lifespan handlers that FastMCP sets up internally
+    mcp_app = server_instance.mcp.http_app(path="/mcp")
 
-    combined_app = Starlette(
-        routes=[
-            Route("/health", health_endpoint, methods=["GET"]),
-            Route("/get-base-instruction", get_base_instruction_endpoint, methods=["GET"]),
-            Mount("/", app=mcp_asgi_app),
-        ]
-    )
+    # Inject custom routes at the front so they take priority
+    from starlette.routing import Route as StarletteRoute
+    mcp_app.router.routes.insert(0, StarletteRoute("/health", health_endpoint, methods=["GET"]))
+    mcp_app.router.routes.insert(1, StarletteRoute("/get-base-instruction", get_base_instruction_endpoint, methods=["GET"]))
 
-    uvicorn.run(combined_app, host="0.0.0.0", port=port)
+    logger.info("Custom routes injected: /health, /get-base-instruction")
+    uvicorn.run(mcp_app, host="0.0.0.0", port=port)
 
 
 def main():
