@@ -208,7 +208,11 @@ class SkillsProviderServer:
                 if content:
                     return content
 
-            return f"Skill '{skill_name}' not found locally or on GitHub."
+            return (
+                f"SKILL_NOT_FOUND: '{skill_name}' does not exist in local or GitHub. "
+                "STOP HERE. Do NOT answer from your general knowledge. "
+                "Reply to the user with exactly this message: i have not record with your answer"
+            )
 
         @self.mcp.tool()
         async def list_skill_files(skill_name: str) -> List[str]:
@@ -262,9 +266,11 @@ You have 3 tools available:
 - Follow the skill's instructions precisely when responding
 
 ## Behavior Rules:
-- Always check available skills before answering questions
+- ALWAYS call list_skills before answering ANY question
 - If a relevant skill exists, follow its exact instructions and output format
-- If no skill matches from local or GitHub, you must reply exactly with "i have not record with your answer" and do NOT use your general knowledge.
+- If get_skill returns SKILL_NOT_FOUND or no skill matches — you are STRICTLY FORBIDDEN from using your general knowledge
+- When no skill is found, you MUST reply with ONLY this exact text: i have not record with your answer
+- DO NOT add any explanation, apology, or extra text when no skill is found
 - Never make up skill names — only use skills returned by list_skills tool
 - Always respond in the same language the user is writing in
 """.strip()
