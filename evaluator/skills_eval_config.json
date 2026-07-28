@@ -1,0 +1,66 @@
+{
+  "providers": {
+    "openai": {
+      "base_url": "https://api.openai.com/v1",
+      "api_key_env": "OPENAI_API_KEY",
+      "extra_headers": {}
+    }
+  },
+  "mcp": {
+    "transport": "stdio",
+    "stdio": {
+      "command": "python",
+      "args": ["main.py"],
+      "cwd": ".."
+    }
+  },
+  "models": [
+    {
+      "id": "gpt-4o-mini",
+      "label": "gpt-4o-mini",
+      "provider": "openai"
+    }
+  ],
+  "judge": {
+    "id": "gpt-4o",
+    "provider": "openai",
+    "temperature": 0.0
+  },
+  "run": {
+    "max_tool_iterations": 10,
+    "temperature": 0.2,
+    "request_timeout_s": 120,
+    "retries": 2,
+    "save_transcripts": true,
+    "concurrency": 1
+  },
+  "profiles": [
+    {
+      "name": "skills_mcp_agent",
+      "questions": "examples/getting-started/questions.json",
+      "system_prompt": "You are an AI agent connected to a Skills MCP server. For every user request, inspect the available skills with list_skills, select only relevant skills, and retrieve their instructions with get_skill before answering. Follow retrieved SKILL.md instructions faithfully. Use list_skill_files when supporting files may be relevant. Never invent skill content or claim that a missing skill exists. If get_skill returns SKILL_NOT_FOUND, stop and report that the requested knowledge is unavailable.",
+      "dimensions": [
+        {
+          "name": "tool_use",
+          "description": "Did the model discover and call the appropriate MCP tools in a sensible order with valid arguments?"
+        },
+        {
+          "name": "skill_selection",
+          "description": "Did the model select the relevant skill and avoid unrelated skills?"
+        },
+        {
+          "name": "faithfulness",
+          "description": "Is the answer grounded only in retrieved skill/tool content without invented claims?"
+        },
+        {
+          "name": "answer_quality",
+          "description": "Is the final answer correct, useful, clear, and responsive to the user request?"
+        },
+        {
+          "name": "hallucination_resistance",
+          "description": "Does the model reject false premises and missing skills instead of fabricating content?"
+        }
+      ]
+    }
+  ]
+}

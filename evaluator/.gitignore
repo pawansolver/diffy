@@ -1,0 +1,20 @@
+# secrets
+.env
+
+# local configs (real machine paths, private model lists, etc.)
+*.local.json
+
+# outputs
+results/
+
+# node
+node_modules/
+
+# python leftovers (from the original harness)
+.venv/
+__pycache__/
+*.pyc
+
+# misc
+*.bak
+.DS_Store

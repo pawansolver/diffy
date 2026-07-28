@@ -38,6 +38,7 @@ ENV/
 Thumbs.db
 
 # Project specific
+.env
 .server.pid
 server.log
 *.log

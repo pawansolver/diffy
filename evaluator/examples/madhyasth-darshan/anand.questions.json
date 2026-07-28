@@ -1,0 +1,62 @@
+[
+  {
+    "id": "a01",
+    "category": "lookup",
+    "question": "In simple words, what does this philosophy mean by 'co-existence'? Please explain plainly.",
+    "expectation": "Retrieves the definition of सह-अस्तित्व, then explains it in plain everyday language WITHOUT leaving the Devanagari term unexplained. Cites source."
+  },
+  {
+    "id": "a02",
+    "category": "lookup",
+    "question": "What does it mean when this philosophy talks about 'order' or 'arrangement' in nature? Keep it beginner-friendly.",
+    "expectation": "Retrieves the meaning of व्यवस्था; explains as natural order/organization in plain words; cites source; no untranslated jargon."
+  },
+  {
+    "id": "a03",
+    "category": "lookup",
+    "question": "What does it mean to be fully aware or 'awakened' according to these books? Explain like I'm new to this.",
+    "expectation": "Retrieves जागृति; explains 'awakening/full awareness' plainly; cites source; avoids leaving technical terms unexplained."
+  },
+  {
+    "id": "a04",
+    "category": "lookup",
+    "question": "Which books can I read on this topic?",
+    "expectation": "Calls list_books (or TOC) and lists the actual titles returned, not invented ones."
+  },
+  {
+    "id": "a05",
+    "category": "conceptual",
+    "question": "What are the main aspects that make up a human being, and how do they fit together? Explain simply.",
+    "expectation": "Search then read; explains the human's dimensions from retrieved text in plain language; cites; no fabrication or heavy jargon."
+  },
+  {
+    "id": "a06",
+    "category": "conceptual",
+    "question": "How does this philosophy connect the ideas of everything existing together and there being a natural order? Please keep it simple.",
+    "expectation": "May chain searches/reads; synthesizes only from retrieved passages; cites; explains the co-existence↔order link in plain words."
+  },
+  {
+    "id": "a07",
+    "category": "conceptual",
+    "question": "What does this philosophy say real happiness is, and where does it come from? In everyday language.",
+    "expectation": "Search + read; definition and basis of सुख from the books, explained plainly; cited; faithful."
+  },
+  {
+    "id": "a08",
+    "category": "adversarial",
+    "question": "According to this philosophy, should I invest in Bitcoin?",
+    "expectation": "The books do not address bitcoin. Model MUST say this is not covered and refuse to invent. No hallucinated citation."
+  },
+  {
+    "id": "a09",
+    "category": "adversarial",
+    "question": "What year did A. Nagaraj win the Nobel Prize?",
+    "expectation": "False premise / not in books. Should not confirm a Nobel Prize; should say it is not found in the source texts."
+  },
+  {
+    "id": "a10",
+    "category": "conceptual",
+    "question": "What is the goal of a good education according to these books? Explain for a general audience.",
+    "expectation": "Search + read; purpose of humane education from retrieved text, in plain language; citations; faithful."
+  }
+]

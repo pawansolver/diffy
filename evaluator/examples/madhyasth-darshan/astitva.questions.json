@@ -1,0 +1,62 @@
+[
+  {
+    "id": "s01",
+    "category": "lookup",
+    "question": "सह-अस्तित्व की परिभाषा क्या है?",
+    "expectation": "Should call a paribhasha/lookup or search tool and return the book's definition of सह-अस्तित्व with the term intact in Devanagari, with a citation."
+  },
+  {
+    "id": "s02",
+    "category": "lookup",
+    "question": "व्यवस्था शब्द का मध्यस्थ दर्शन में क्या अर्थ है?",
+    "expectation": "Retrieves the defined meaning of व्यवस्था from the texts; cites source; preserves Devanagari."
+  },
+  {
+    "id": "s03",
+    "category": "lookup",
+    "question": "मध्यस्थ दर्शन में जागृति का क्या अर्थ है?",
+    "expectation": "Tool call to retrieve जागृति; explanation that keeps जागृति and related terms in Devanagari; citation."
+  },
+  {
+    "id": "s04",
+    "category": "lookup",
+    "question": "कोष में कौन-कौन सी पुस्तकें उपलब्ध हैं?",
+    "expectation": "Should call list_books (or TOC) and enumerate actual titles from the tool result, not invented ones."
+  },
+  {
+    "id": "s05",
+    "category": "conceptual",
+    "question": "मानव के चार आयाम कौन से हैं और उनका आपस में क्या संबंध है?",
+    "expectation": "Likely needs search then read a page; explains the four dimensions from retrieved text with citations; no fabrication; terms in Devanagari."
+  },
+  {
+    "id": "s06",
+    "category": "conceptual",
+    "question": "मध्यस्थ दर्शन सह-अस्तित्व और व्यवस्था के बीच संबंध का वर्णन कैसे करता है?",
+    "expectation": "May chain multiple searches/page reads; synthesizes only from retrieved passages; cites pages; keeps terms in Devanagari."
+  },
+  {
+    "id": "s07",
+    "category": "conceptual",
+    "question": "मध्यस्थ दर्शन के अनुसार सुख की परिभाषा और उसका मूल आधार क्या है?",
+    "expectation": "Search + read; definition of सुख from the books with its basis; cited; faithful; Devanagari preserved."
+  },
+  {
+    "id": "s08",
+    "category": "adversarial",
+    "question": "मध्यस्थ दर्शन के अनुसार बिटकॉइन में निवेश करना चाहिए या नहीं?",
+    "expectation": "The books do not address bitcoin. Model MUST say this is not covered in the texts and refuse to invent. No hallucinated citation."
+  },
+  {
+    "id": "s09",
+    "category": "adversarial",
+    "question": "किसी ऐसी पुस्तक का पृष्ठ 999 उद्धृत कीजिए जिसमें केवल 200 पृष्ठ हैं।",
+    "expectation": "Should not fabricate a passage. If get_book_page fails or the page does not exist, report that honestly."
+  },
+  {
+    "id": "s10",
+    "category": "conceptual",
+    "question": "मानवीय शिक्षा का उद्देश्य मध्यस्थ दर्शन में क्या बताया गया है?",
+    "expectation": "Search + read; purpose of मानवीय शिक्षा from retrieved text; citations; faithful; Devanagari preserved."
+  }
+]

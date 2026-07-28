@@ -1,0 +1,80 @@
+{
+  "providers": {
+    "openrouter": {
+      "base_url": "https://openrouter.ai/api/v1",
+      "api_key_env": "OPENROUTER_API_KEY",
+      "extra_headers": {
+        "HTTP-Referer": "http://localhost",
+        "X-Title": "madhyasth-darshan-eval"
+      }
+    },
+    "sarvam": {
+      "base_url": "https://api.sarvam.ai/v1",
+      "api_key_env": "SARVAM_API_KEY",
+      "auth_header": "api-subscription-key",
+      "auth_scheme": ""
+    }
+  },
+  "mcp": {
+    "transport": "stdio",
+    "stdio": {
+      "command": "node",
+      "args": ["/absolute/path/to/your/md-mcp/build/index.js"],
+      "env": {}
+    }
+  },
+  "models": [
+    { "id": "google/gemini-2.5-flash-lite", "label": "gemini-2.5-flash-lite" },
+    { "id": "google/gemini-3.1-flash-lite", "label": "gemini-3.1-flash-lite" },
+    { "id": "deepseek/deepseek-v4-flash", "label": "deepseek-v4-flash" },
+    { "id": "qwen/qwen3.6-flash", "label": "qwen3.6-flash" },
+    { "id": "google/gemini-2.5-flash", "label": "gemini-2.5-flash" },
+    { "id": "qwen/qwen3-235b-a22b-2507", "label": "qwen3-235b-a22b" },
+    { "id": "openai/gpt-5-nano", "label": "gpt-5-nano" },
+    { "id": "z-ai/glm-4.7-flash", "label": "glm-4.7-flash" },
+    { "id": "deepseek/deepseek-v3.2", "label": "deepseek-v3.2" },
+    { "id": "openai/gpt-5-mini", "label": "gpt-5-mini" },
+    { "id": "anthropic/claude-haiku-4.5", "label": "claude-haiku-4.5" },
+    { "id": "google/gemini-3.1-pro-preview", "label": "gemini-3.1-pro-preview" },
+    { "id": "openai/gpt-5.5", "label": "gpt-5.5" },
+    { "id": "deepseek/deepseek-v4-pro", "label": "deepseek-v4-pro" },
+    { "id": "openrouter/auto", "label": "openrouter-auto" },
+    { "id": "sarvam-105b", "label": "sarvam-105b", "provider": "sarvam" }
+  ],
+  "judge": {
+    "id": "anthropic/claude-sonnet-5",
+    "temperature": 0.0
+  },
+  "run": {
+    "max_tool_iterations": 10,
+    "temperature": 0.2,
+    "request_timeout_s": 120,
+    "retries": 2,
+    "save_transcripts": true,
+    "concurrency": 4
+  },
+  "profiles": [
+    {
+      "name": "anand",
+      "questions": "anand.questions.json",
+      "system_prompt": "You are 'Anand', a warm study assistant for the philosophy of A. Nagaraj. You explain its ideas to ordinary people in SIMPLE, everyday language.\n\nRules:\n- ALWAYS use the provided tools to retrieve relevant passages before answering. Do not answer from memory.\n- Answer ONLY from the retrieved text. If it is not there, clearly say it was not found in the books. Never invent or speculate.\n- Do NOT use Madhyasth Darshan technical terms or Devanagari jargon (like सह-अस्तित्व, व्यवस्था, जागृति). Instead, explain the underlying idea in plain, relatable words. If a term is unavoidable, gloss it once in plain language.\n- Cite the book and page number(s) for every claim, based on tool results.\n- Keep it clear and friendly, as if explaining to a curious beginner.",
+      "dimensions": [
+        { "name": "tool_use", "description": "Did it call appropriate tools with sensible arguments? For unanswerable/adversarial questions, refusing to fabricate scores high." },
+        { "name": "faithfulness", "description": "Grounded ONLY in retrieved tool results, with citations, no invented facts. Hallucinated citations or made-up content = 1." },
+        { "name": "simplicity", "description": "Plain, everyday language a beginner understands. Penalize untranslated technical/Devanagari jargon. 5 = fully accessible, no unexplained terms." },
+        { "name": "answer_quality", "description": "Overall: a correct, clear, useful answer to the question for a layperson." }
+      ]
+    },
+    {
+      "name": "astitva",
+      "questions": "astitva.questions.json",
+      "system_prompt": "You are 'Astitva', a precise study assistant for the philosophy 'Madhyasth Darshan' (मध्यस्थ दर्शन) by A. Nagaraj, for serious students of the texts.\n\nRules:\n- ALWAYS use the provided tools to retrieve relevant passages before answering. Do not answer doctrinal questions from memory.\n- Answer ONLY from the retrieved text. If the text does not contain the answer, say clearly that it was not found in the books. Do NOT invent or speculate.\n- Preserve Madhyasth Darshan terminology EXACTLY in Devanagari (e.g. सह-अस्तित्व, व्यवस्था, जागृति). Do not transliterate or translate key terms unless explicitly asked.\n- Cite the book and page number(s) for every claim, based on tool results.\n- For conceptual questions, chain tool calls as needed: search, then read specific pages before answering.",
+      "dimensions": [
+        { "name": "tool_use", "description": "Did it call appropriate tools with sensible arguments? For unanswerable/adversarial questions, refusing to fabricate scores high." },
+        { "name": "faithfulness", "description": "Grounded ONLY in retrieved tool results, with citations, no invented facts. Hallucinated citations or made-up content = 1." },
+        { "name": "devanagari", "description": "Madhyasth Darshan terms preserved correctly in Devanagari, not mangled, mis-transliterated, or corrupted. 5 if N/A and nothing was needed." },
+        { "name": "answer_quality", "description": "Overall: a correct, clear, useful answer to the question for a serious student." }
+      ]
+    }
+  ]
+}

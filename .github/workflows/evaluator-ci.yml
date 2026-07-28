@@ -1,0 +1,56 @@
+name: Evaluator CI
+
+on:
+  push:
+    paths:
+      - "evaluator/**"
+      - "main.py"
+      - "config.py"
+      - "requirements.txt"
+      - ".github/workflows/evaluator-ci.yml"
+  pull_request:
+    paths:
+      - "evaluator/**"
+      - "main.py"
+      - "config.py"
+      - "requirements.txt"
+      - ".github/workflows/evaluator-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  evaluator:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: evaluator/package-lock.json
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install Skills MCP dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Install evaluator dependencies
+        working-directory: evaluator
+        run: npm ci
+
+      - name: Test Python API authentication
+        run: python -m unittest discover -s tests
+
+      - name: Validate, typecheck, and test
+        working-directory: evaluator
+        run: npm run check
+
+      - name: Smoke-test MCP tool discovery
+        working-directory: evaluator
+        run: npm run eval -- --config skills_eval_config.json --list-tools

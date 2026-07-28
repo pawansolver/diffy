@@ -1,0 +1,30 @@
+{
+  "name": "dhee-eval",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Reusable MCP tool-calling eval harness: sweep candidate LLMs across assistant profiles, score with an LLM judge. Built to pick models for the Madhyasth Darshan study assistant.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "eval": "tsx src/cli.ts",
+    "fetch-models": "tsx scripts/fetch-models.ts",
+    "mock-server": "tsx examples/mock-mcp-server/index.ts",
+    "validate-config": "tsx scripts/validate-config.ts skills_eval_config.json",
+    "test": "tsx --test tests/*.test.ts",
+    "check": "npm run validate-config && npm run typecheck && npm test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "dotenv": "^16.4.5",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

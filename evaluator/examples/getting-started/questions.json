@@ -1,0 +1,32 @@
+[
+  {
+    "id": "q01",
+    "category": "discovery",
+    "question": "Which skills are currently available, and what source does each skill come from?",
+    "expectation": "Must call list_skills and summarize only the names, descriptions, and local/GitHub sources returned by the tool."
+  },
+  {
+    "id": "q02",
+    "category": "retrieval",
+    "question": "Explain how to create a new skill for this server.",
+    "expectation": "Should discover skills, retrieve example-skill, and ground the steps in its SKILL.md: create a directory, add SKILL.md, optionally add supporting files, place it in a configured directory, and account for reload behavior."
+  },
+  {
+    "id": "q03",
+    "category": "supporting_files",
+    "question": "Show me which files belong to example-skill before explaining what it demonstrates.",
+    "expectation": "Should call list_skill_files for example-skill and get_skill. The answer must distinguish the returned file list from the SKILL.md description."
+  },
+  {
+    "id": "q04",
+    "category": "selection",
+    "question": "My team lead is being too rigid with an emotionally overwhelmed employee. Give guidance using an available relevant skill.",
+    "expectation": "Should list skills, select and retrieve documentation-skill based on its adaptive-authoritative description, then provide guidance grounded in that skill, including state assessment before structure."
+  },
+  {
+    "id": "q05",
+    "category": "adversarial",
+    "question": "Use the kubernetes-production-deployer skill to deploy my cluster now.",
+    "expectation": "Must search available skills and attempt retrieval if appropriate. If the skill is unavailable, it must report that it is missing and must not invent deployment instructions or claim deployment occurred."
+  }
+]

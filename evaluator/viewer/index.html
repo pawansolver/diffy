@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dhee-eval — Runs Viewer</title>
+<style>
+  :root {
+    --bg: #0f1115; --panel: #171a21; --panel2: #1e222b; --border: #2a2f3a;
+    --text: #e6e9ef; --muted: #9aa3b2; --accent: #6ea8fe; --good: #4ade80;
+    --warn: #fbbf24; --bad: #f87171; --tool: #c084fc;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 14px; line-height: 1.5;
+  }
+  /* Devanagari renders well in Noto/system fonts */
+  .deva, .answer, .qtext, .ttext {
+    font-family: "Noto Sans Devanagari", "Kohinoor Devanagari", "Mangal",
+      -apple-system, "Segoe UI", sans-serif;
+  }
+  header {
+    position: sticky; top: 0; z-index: 10; background: var(--panel);
+    border-bottom: 1px solid var(--border); padding: 12px 18px;
+  }
+  h1 { font-size: 16px; margin: 0 0 10px; font-weight: 600; }
+  h1 small { color: var(--muted); font-weight: 400; font-size: 12px; }
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  select, input[type=search] {
+    background: var(--panel2); color: var(--text); border: 1px solid var(--border);
+    border-radius: 6px; padding: 6px 9px; font-size: 13px;
+  }
+  input[type=search] { min-width: 220px; flex: 1; }
+  label.file {
+    background: var(--accent); color: #07101f; padding: 6px 12px; border-radius: 6px;
+    cursor: pointer; font-weight: 600; font-size: 13px;
+  }
+  label.file input { display: none; }
+  .stats { color: var(--muted); font-size: 12px; margin-left: auto; white-space: nowrap; }
+  main { padding: 16px 18px 80px; max-width: 1100px; margin: 0 auto; }
+  #drop {
+    border: 2px dashed var(--border); border-radius: 12px; padding: 60px 20px;
+    text-align: center; color: var(--muted); margin-top: 40px;
+  }
+  #drop.drag { border-color: var(--accent); color: var(--text); }
+  .card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    margin-bottom: 14px; overflow: hidden;
+  }
+  .card.empty { border-color: var(--bad); }
+  .chead {
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    padding: 10px 14px; background: var(--panel2); border-bottom: 1px solid var(--border);
+  }
+  .model { font-weight: 600; }
+  .badge {
+    font-size: 11px; padding: 2px 8px; border-radius: 20px; border: 1px solid var(--border);
+    color: var(--muted); white-space: nowrap;
+  }
+  .badge.profile { color: #67e8f9; border-color: #226b73; }
+  .badge.cat-lookup { color: #93c5fd; border-color: #2b4a73; }
+  .badge.cat-conceptual { color: #fcd34d; border-color: #6b5320; }
+  .badge.cat-adversarial { color: #fca5a5; border-color: #6b2b2b; }
+  .scores { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
+  .sc { font-size: 11px; padding: 2px 7px; border-radius: 6px; background: #11151c; border: 1px solid var(--border); }
+  .sc b { font-variant-numeric: tabular-nums; }
+  .s5 { color: var(--good); } .s4 { color: #a3e635; } .s3 { color: var(--warn); }
+  .s2 { color: #fb923c; } .s1 { color: var(--bad); } .sn { color: var(--muted); }
+  .metrics { font-size: 11px; color: var(--muted); padding: 6px 14px; border-bottom: 1px solid var(--border); display: flex; gap: 14px; flex-wrap: wrap; }
+  .metrics b { color: var(--text); font-variant-numeric: tabular-nums; }
+  .body { padding: 12px 14px; }
+  .label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 4px; }
+  .qtext { font-weight: 600; margin-bottom: 12px; }
+  .answer { background: var(--panel2); border-radius: 8px; padding: 10px 12px; white-space: pre-wrap; word-wrap: break-word; }
+  .answer.empty-a { color: var(--bad); font-style: italic; }
+  .answer strong { color: #fff; }
+  .answer h3 { font-size: 14px; margin: 10px 0 4px; }
+  .notes { font-size: 12px; color: var(--muted); margin-top: 8px; font-style: italic; }
+  details.trans { margin-top: 12px; }
+  details.trans > summary {
+    cursor: pointer; color: var(--accent); font-size: 12px; user-select: none;
+    padding: 6px 0;
+  }
+  .msg { border-left: 3px solid var(--border); padding: 6px 10px; margin: 8px 0; background: #12151c; border-radius: 0 6px 6px 0; }
+  .msg .role { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 3px; }
+  .msg.system { border-color: #3a4150; }
+  .msg.user { border-color: var(--accent); }
+  .msg.assistant { border-color: var(--good); }
+  .msg.tool { border-color: var(--tool); }
+  .msg.toolcall { border-color: var(--tool); }
+  .toolcall .call { font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: var(--tool); }
+  .toolcall .args { font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: var(--text); }
+  .ttext { white-space: pre-wrap; word-wrap: break-word; max-height: 240px; overflow: auto; font-size: 12px; }
+  pre.json { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; white-space: pre-wrap; word-wrap: break-word; margin: 0; max-height: 240px; overflow: auto; color: #cbd5e1; }
+  .muted { color: var(--muted); }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>dhee-eval — Runs Viewer <small>load a runs_*.jsonl file</small></h1>
+  <div class="controls">
+    <label class="file">Open JSONL<input type="file" id="file" accept=".jsonl,.json,.txt"></label>
+    <select id="fProfile"><option value="">All profiles</option></select>
+    <select id="fModel"><option value="">All models</option></select>
+    <select id="fCat"><option value="">All categories</option></select>
+    <select id="fSort">
+      <option value="orig">Original order</option>
+      <option value="qual">Quality ↑</option>
+      <option value="cost">Cost ↓</option>
+      <option value="lat">Latency ↓</option>
+    </select>
+    <input type="search" id="fSearch" placeholder="Search question / answer / Devanagari…">
+    <span class="stats" id="stats"></span>
+  </div>
+</header>
+<main>
+  <div id="drop">Drag a <b>runs_*.jsonl</b> here, or click "Open JSONL".<br><span class="muted">Everything runs locally in your browser — nothing is uploaded.</span></div>
+  <div id="list"></div>
+</main>
+<script>
+let RECORDS = [];
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? "" : s)
+  .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+// minimal, safe markdown-ish: escape first, then bold / headings / bullets
+function mdLite(s) {
+  let h = esc(s);
+  h = h.replace(/^###?\s+(.+)$/gm, "<h3>$1</h3>");
+  h = h.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  h = h.replace(/^\s*[-*•]\s+/gm, "• ");
+  return h;
+}
+
+function scoreClass(v){ const n = Number(v); return Number.isFinite(n) ? "s"+Math.round(n) : "sn"; }
+function scBadge(label, v){
+  const disp = (v===null||v===undefined||v==="") ? "—" : v;
+  return `<span class="sc"><span class="muted">${esc(label)}</span> <b class="${scoreClass(v)}">${esc(disp)}</b></span>`;
+}
+// discover score_<dimension> keys on a record (rubrics vary per profile)
+function scoreKeys(r){
+  return Object.keys(r).filter(k => k.startsWith("score_") && k !== "score_notes");
+}
+
+function num(v){ const n = Number(v); return Number.isFinite(n) ? n : null; }
+
+function renderTranscript(t){
+  if(!Array.isArray(t) || !t.length) return '<span class="muted">no transcript saved</span>';
+  let html = "";
+  for(const m of t){
+    const role = m.role || "?";
+    if(role === "assistant" && Array.isArray(m.tool_calls) && m.tool_calls.length){
+      for(const tc of m.tool_calls){
+        const fn = tc.function?.name || "?";
+        let args = tc.function?.arguments;
+        try { args = JSON.stringify(JSON.parse(args), null, 0); } catch(e){}
+        html += `<div class="msg toolcall"><div class="role">assistant → tool call</div>`
+             +  `<span class="call">${esc(fn)}</span>(<span class="args">${esc(args||"")}</span>)</div>`;
+      }
+      if(m.content && String(m.content).trim()){
+        html += `<div class="msg assistant"><div class="role">assistant</div><div class="ttext">${mdLite(m.content)}</div></div>`;
+      }
+      continue;
+    }
+    if(role === "tool"){
+      let c = m.content;
+      let pretty = null;
+      try { pretty = JSON.stringify(JSON.parse(c), null, 2); } catch(e){}
+      const inner = pretty
+        ? `<pre class="json">${esc(pretty)}</pre>`
+        : `<div class="ttext">${esc(c)}</div>`;
+      html += `<div class="msg tool"><div class="role">tool result · ${esc(m.name||"")}</div>${inner}</div>`;
+      continue;
+    }
+    const cls = role === "system" ? "system" : role === "user" ? "user" : "assistant";
+    html += `<div class="msg ${cls}"><div class="role">${esc(role)}</div><div class="ttext">${mdLite(String(m.content||""))}</div></div>`;
+  }
+  return html;
+}
+
+function card(r){
+  const empty = !(String(r.answer||"").trim());
+  const cat = r.category || "";
+  const metrics = [
+    ["tools", r.n_tool_calls], ["iters", r.n_iters],
+    ["lat", (r.latency_s!=null? r.latency_s+"s":"")],
+    ["$", (r.cost_usd!=null? Number(r.cost_usd).toFixed(5):"")],
+    ["in_tok", r.in_tokens], ["out_tok", r.out_tokens],
+    ["used", r.tools_used||"—"],
+  ].filter(x=>x[1]!=="" && x[1]!=null)
+   .map(x=>`${x[0]} <b>${esc(x[1])}</b>`).join("");
+
+  const scoreBadges = scoreKeys(r)
+    .map(k => scBadge(k.replace(/^score_/,""), r[k]))
+    .join("");
+
+  return `<div class="card ${empty?'empty':''}">
+    <div class="chead">
+      <span class="model">${esc(r.model||r.model_id||"?")}</span>
+      ${r.profile?`<span class="badge profile">${esc(r.profile)}</span>`:''}
+      <span class="badge">${esc(r.qid||"")}</span>
+      <span class="badge cat-${esc(cat)}">${esc(cat)}</span>
+      ${empty?'<span class="badge" style="color:var(--bad);border-color:var(--bad)">EMPTY ANSWER</span>':''}
+      ${r.errors?`<span class="badge" style="color:var(--bad);border-color:var(--bad)">ERR</span>`:''}
+      <span class="scores">${scoreBadges}</span>
+    </div>
+    <div class="metrics">${metrics}</div>
+    <div class="body">
+      <p class="label">Question</p>
+      <div class="qtext">${mdLite(r.question||"")}</div>
+      <p class="label">Answer</p>
+      <div class="answer ${empty?'empty-a':''}">${empty?'(empty — model produced no final answer)':mdLite(r.answer||"")}</div>
+      ${r.score_notes?`<div class="notes">judge: ${esc(r.score_notes)}</div>`:''}
+      ${r.errors?`<div class="notes" style="color:var(--bad)">errors: ${esc(r.errors)}</div>`:''}
+      <details class="trans"><summary>Show tool transcript (${Array.isArray(r.transcript)?r.transcript.length:0} messages)</summary>${renderTranscript(r.transcript)}</details>
+    </div>
+  </div>`;
+}
+
+function fillSelect(id, values, allLabel){
+  $(id).innerHTML = `<option value="">${allLabel}</option>` +
+    values.map(v=>`<option>${esc(v)}</option>`).join("");
+}
+function populateFilters(){
+  const profiles = [...new Set(RECORDS.map(r=>r.profile).filter(Boolean))].sort();
+  const models = [...new Set(RECORDS.map(r=>r.model||r.model_id).filter(Boolean))].sort();
+  const cats = [...new Set(RECORDS.map(r=>r.category).filter(Boolean))].sort();
+  fillSelect("#fProfile", profiles, "All profiles");
+  fillSelect("#fModel", models, "All models");
+  fillSelect("#fCat", cats, "All categories");
+}
+
+function apply(){
+  const pF = $("#fProfile").value, mF = $("#fModel").value, cF = $("#fCat").value;
+  const q = $("#fSearch").value.trim().toLowerCase();
+  const sort = $("#fSort").value;
+  let rows = RECORDS.map((r,i)=>({r,i}));
+  rows = rows.filter(({r})=>
+    (!pF || r.profile===pF) &&
+    (!mF || (r.model||r.model_id)===mF) &&
+    (!cF || r.category===cF) &&
+    (!q || (String(r.question||"")+String(r.answer||"")).toLowerCase().includes(q))
+  );
+  const cmp = {
+    qual:  ({r})=> -(num(r.score_answer_quality) ?? -1),
+    cost:  ({r})=> (num(r.cost_usd) ?? 1e9),
+    lat:   ({r})=> (num(r.latency_s) ?? 1e9),
+  }[sort];
+  if(cmp) rows.sort((a,b)=> cmp(a)-cmp(b));
+  $("#list").innerHTML = rows.map(({r})=>card(r)).join("") ||
+    '<div class="muted" style="padding:40px;text-align:center">No records match.</div>';
+  const avg = k => { const v = rows.map(({r})=>num(r[k])).filter(x=>x!=null); return v.length? (v.reduce((a,b)=>a+b)/v.length).toFixed(2):"—"; };
+  $("#stats").textContent = `${rows.length}/${RECORDS.length} shown · avg qual ${avg("score_answer_quality")}`;
+}
+
+function load(text){
+  RECORDS = text.split(/\r?\n/).filter(l=>l.trim()).map((l,i)=>{
+    try { return JSON.parse(l); } catch(e){ return {model:"PARSE ERROR", qid:"line "+(i+1), question:e.message, answer:l.slice(0,500)}; }
+  });
+  $("#drop").classList.add("hidden");
+  populateFilters();
+  apply();
+}
+
+$("#file").addEventListener("change", e=>{
+  const f = e.target.files[0]; if(!f) return;
+  f.text().then(load);
+});
+["fProfile","fModel","fCat","fSort","fSearch"].forEach(id=>{
+  $("#"+id).addEventListener("input", apply);
+});
+const drop = $("#drop");
+["dragover","dragenter"].forEach(ev=>document.addEventListener(ev, e=>{ e.preventDefault(); drop.classList.add("drag"); }));
+["dragleave","drop"].forEach(ev=>document.addEventListener(ev, e=>{ e.preventDefault(); if(ev!=="drop") drop.classList.remove("drag"); }));
+document.addEventListener("drop", e=>{
+  e.preventDefault(); drop.classList.remove("drag");
+  const f = e.dataTransfer.files[0]; if(f) f.text().then(load);
+});
+
+// Automatically load default sample run if served on localhost
+window.addEventListener('load', () => {
+  const params = new URLSearchParams(window.location.search);
+  const fileUrl = params.get('file') || '/examples/sample-results/runs_20260630_120338.jsonl';
+  fetch(fileUrl)
+    .then(r => {
+      if (!r.ok) throw new Error("Status " + r.status);
+      return r.text();
+    })
+    .then(load)
+    .catch(e => console.log("Not auto-loading run:", e.message));
+});
+</script>
+</body>
+</html>

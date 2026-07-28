@@ -1,6 +1,7 @@
 """FastMCP Skills Provider Server"""
 
 import asyncio
+import hmac
 import logging
 import os
 import sys
@@ -15,6 +16,7 @@ from fastmcp.server.providers.skills import SkillsDirectoryProvider
 from starlette.requests import Request
 from starlette.responses import JSONResponse, PlainTextResponse
 import uvicorn
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from config import ConfigLoader, GithubConfig
 
@@ -22,6 +24,28 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
+
+class ApiKeyMiddleware(BaseHTTPMiddleware):
+    """Protect HTTP MCP and instruction routes when MCP_API_KEY is configured."""
+
+    async def dispatch(self, request: Request, call_next):
+        if request.url.path == "/health":
+            return await call_next(request)
+
+        expected_key = os.getenv("MCP_API_KEY", "").strip()
+        if not expected_key:
+            return await call_next(request)
+
+        authorization = request.headers.get("authorization", "")
+        expected_header = f"Bearer {expected_key}"
+        if not hmac.compare_digest(authorization, expected_header):
+            return JSONResponse(
+                {"error": "unauthorized", "message": "A valid bearer token is required"},
+                status_code=401,
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        return await call_next(request)
 
 
 class SkillsProviderServer:
@@ -338,8 +362,13 @@ def run_http_server(config_file: str, port: int, gateway_url: str = None):
     from starlette.routing import Route as StarletteRoute
     mcp_app.router.routes.insert(0, StarletteRoute("/health", health_endpoint, methods=["GET"]))
     mcp_app.router.routes.insert(1, StarletteRoute("/get-base-instruction", get_base_instruction_endpoint, methods=["GET"]))
+    mcp_app.add_middleware(ApiKeyMiddleware)
 
     logger.info("Custom routes injected: /health, /get-base-instruction")
+    if os.getenv("MCP_API_KEY", "").strip():
+        logger.info("HTTP bearer authentication enabled")
+    else:
+        logger.warning("MCP_API_KEY is not set; HTTP endpoints are unauthenticated")
     uvicorn.run(mcp_app, host="0.0.0.0", port=port)
 
 

@@ -5,13 +5,15 @@ No LLM integration - Dify's own LLM will be used.
 """
 
 import os
+import hmac
 import json
 import logging
 from pathlib import Path
 from typing import Optional
 
 import httpx
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
@@ -22,6 +24,26 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("instruction_api")
 
 app = FastAPI(title="Skills Instruction API", version="1.0.0")
+
+
+@app.middleware("http")
+async def require_api_key(request: Request, call_next):
+    """Protect instruction routes when MCP_API_KEY is configured."""
+    if request.url.path == "/health":
+        return await call_next(request)
+
+    expected_key = os.getenv("MCP_API_KEY", "").strip()
+    if not expected_key:
+        return await call_next(request)
+
+    authorization = request.headers.get("authorization", "")
+    if not hmac.compare_digest(authorization, f"Bearer {expected_key}"):
+        return JSONResponse(
+            status_code=401,
+            content={"detail": "A valid bearer token is required"},
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return await call_next(request)
 
 app.add_middleware(
     CORSMiddleware,

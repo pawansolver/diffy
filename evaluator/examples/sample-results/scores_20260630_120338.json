@@ -1,0 +1,36 @@
+[
+  {
+    "profile": "astitva",
+    "model": "gemini-3.5-flash",
+    "model_id": "google/gemini-3.5-flash",
+    "qid": "q01",
+    "category": "lookup",
+    "question": "सह-अस्तित्व की परिभाषा क्या है?",
+    "called_any_tool": true,
+    "n_tool_calls": 6,
+    "tools_used": "lookup_paribhasha,lookup_paribhasha,semantic_search,lexical_search_books,lexical_search_books,list_books",
+    "n_iters": 6,
+    "latency_s": 24.94,
+    "in_tokens": 14921,
+    "out_tokens": 570,
+    "cost_usd": 0.027512,
+    "errors": ""
+  },
+  {
+    "profile": "astitva",
+    "model": "gemini-3.5-flash",
+    "model_id": "google/gemini-3.5-flash",
+    "qid": "q02",
+    "category": "lookup",
+    "question": "व्यवस्था शब्द का मध्यस्थ दर्शन में क्या अर्थ है?",
+    "called_any_tool": true,
+    "n_tool_calls": 5,
+    "tools_used": "lookup_paribhasha,semantic_search,lexical_search_books,lexical_search_books,lexical_search_books",
+    "n_iters": 6,
+    "latency_s": 36.7,
+    "in_tokens": 22301,
+    "out_tokens": 3995,
+    "cost_usd": 0.069407,
+    "errors": ""
+  }
+]

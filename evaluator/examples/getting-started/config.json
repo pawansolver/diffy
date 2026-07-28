@@ -1,0 +1,48 @@
+{
+  "providers": {
+    "groq": {
+      "base_url": "https://api.groq.com/openai/v1",
+      "api_key_env": "GROQ_API_KEY"
+    },
+    "openai": {
+      "base_url": "https://api.openai.com/v1",
+      "api_key_env": "OPENAI_API_KEY"
+    }
+  },
+  "mcp": {
+    "transport": "stdio",
+    "stdio": {
+      "command": "npx",
+      "args": ["tsx", "examples/mock-mcp-server/index.ts"]
+    }
+  },
+  "models": [
+    { "id": "llama-3.3-70b-versatile", "label": "llama-3.3-70b", "provider": "groq" },
+    { "id": "gpt-4o-mini", "label": "gpt-4o-mini", "provider": "openai" }
+  ],
+  "judge": {
+    "id": "gpt-4o-mini",
+    "provider": "openai",
+    "temperature": 0.0
+  },
+  "run": {
+    "max_tool_iterations": 6,
+    "temperature": 0.2,
+    "request_timeout_s": 120,
+    "retries": 2,
+    "save_transcripts": true,
+    "concurrency": 2
+  },
+  "profiles": [
+    {
+      "name": "default",
+      "questions": "questions.json",
+      "system_prompt": "You are a study assistant with tools to search and read a corpus. ALWAYS use the tools to retrieve passages before answering. Answer ONLY from retrieved text and cite the book + page. If the text does not contain the answer, say it was not found. Do not invent anything.",
+      "dimensions": [
+        { "name": "tool_use", "description": "Did it call appropriate tools with sensible arguments? Refusing to fabricate on unanswerable questions scores high." },
+        { "name": "faithfulness", "description": "Grounded ONLY in retrieved tool results, with citations, no invented facts. Hallucinated citations = 1." },
+        { "name": "answer_quality", "description": "Overall: a correct, clear, useful answer to the question." }
+      ]
+    }
+  ]
+}
