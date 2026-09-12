@@ -59,6 +59,11 @@ SKILLS_DIR = Path(os.getenv("SKILLS_DIR", "./skills")).resolve()
 # This is the instruction that was previously entered manually in Dify's
 # Instructions box. It now lives in the backend — Dify's box stays empty.
 
+DEFAULT_SKILLS_USER_PROMPT = """\
+[INSTRUCTION: You have access to a dynamic skills library via MCP tools (list_skills, get_skill, list_skill_files). For every user request, first discover available skills with list_skills, select relevant skills, and retrieve instructions with get_skill before answering. If no skill matches or get_skill returns SKILL_NOT_FOUND, reply strictly with: "i have not record with your answer". Never answer from general knowledge when no skill matches.]
+""".strip()
+
+
 BASE_SYSTEM_INSTRUCTION = """\
 You are an intelligent AI assistant with access to a dynamic skills library via MCP tools.
 
@@ -92,6 +97,10 @@ class InstructionResponse(BaseModel):
     instruction: str   # Clean SKILL.md content (ready to use as system prompt)
     skill: str
     source: str        # "local" or "github"
+
+class DefaultUserPromptResponse(BaseModel):
+    default_user_prompt: str
+
 
 class BaseInstructionResponse(BaseModel):
     instruction: str   # Full base system prompt that replaces Dify's instruction box
@@ -176,6 +185,15 @@ def clean_frontmatter(content: str) -> str:
 @app.get("/health")
 def health():
     return {"status": "ok", "message": "Instruction API is running"}
+
+
+@app.get("/get-default-user-prompt", response_model=DefaultUserPromptResponse)
+def get_default_user_prompt():
+    """
+    Returns the default prompt that should be prepended to the user prompt
+    to enforce MCP skills discovery for every request by default.
+    """
+    return DefaultUserPromptResponse(default_user_prompt=DEFAULT_SKILLS_USER_PROMPT)
 
 
 @app.get("/get-base-instruction", response_model=BaseInstructionResponse)

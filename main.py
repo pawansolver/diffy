@@ -276,6 +276,11 @@ class SkillsProviderServer:
 
 
 # ─── Base System Instruction (served via /get-base-instruction) ───────────────
+DEFAULT_SKILLS_USER_PROMPT = """\
+[INSTRUCTION: You have access to a dynamic skills library via MCP tools (list_skills, get_skill, list_skill_files). For every user request, first discover available skills with list_skills, select relevant skills, and retrieve instructions with get_skill before answering. If no skill matches or get_skill returns SKILL_NOT_FOUND, reply strictly with: "i have not record with your answer". Never answer from general knowledge when no skill matches.]
+""".strip()
+
+
 BASE_SYSTEM_INSTRUCTION = """\
 You are an intelligent AI assistant with access to a dynamic skills library via MCP tools.
 
@@ -303,6 +308,11 @@ You have 3 tools available:
 async def health_endpoint(request: Request):
     """Health check endpoint"""
     return JSONResponse({"status": "ok", "message": "Skills MCP Server is running"})
+
+
+async def get_default_user_prompt_endpoint(request: Request):
+    """Returns the default user prompt prefix as plain text for appending to user queries."""
+    return PlainTextResponse(DEFAULT_SKILLS_USER_PROMPT)
 
 
 async def get_base_instruction_endpoint(request: Request):
@@ -362,6 +372,7 @@ def run_http_server(config_file: str, port: int, gateway_url: str = None):
     from starlette.routing import Route as StarletteRoute
     mcp_app.router.routes.insert(0, StarletteRoute("/health", health_endpoint, methods=["GET"]))
     mcp_app.router.routes.insert(1, StarletteRoute("/get-base-instruction", get_base_instruction_endpoint, methods=["GET"]))
+    mcp_app.router.routes.insert(2, StarletteRoute("/get-default-user-prompt", get_default_user_prompt_endpoint, methods=["GET"]))
     mcp_app.add_middleware(ApiKeyMiddleware)
 
     logger.info("Custom routes injected: /health, /get-base-instruction")
