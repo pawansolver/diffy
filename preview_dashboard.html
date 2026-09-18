@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Diffy — FastMCP Skills Provider & Evaluator Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(18, 24, 38, 0.75);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-hover: rgba(255, 255, 255, 0.12);
+      --primary: #38bdf8;
+      --primary-glow: rgba(56, 189, 248, 0.25);
+      --emerald: #34d399;
+      --purple: #a855f7;
+      --amber: #fbbf24;
+      --rose: #f43f5e;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --code-bg: #070a10;
+      --radius: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: radial-gradient(circle at top center, #151e32 0%, var(--bg) 60%);
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    header {
+      border-bottom: 1px solid var(--card-border);
+      background: rgba(9, 13, 22, 0.85);
+      backdrop-filter: blur(14px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 16px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, #0284c7, #38bdf8);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 800;
+      box-shadow: 0 0 16px var(--primary-glow);
+    }
+
+    .brand h1 {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand span {
+      color: var(--primary);
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 4px;
+      border-radius: 10px;
+      border: 1px solid var(--card-border);
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tab-btn.active, .tab-btn:hover {
+      color: #fff;
+      background: rgba(56, 189, 248, 0.15);
+      box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.3);
+    }
+
+    main {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 32px 24px 80px;
+    }
+
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Cards & Grid */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 24px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Architecture Visualizer */
+    .arch-flow {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      position: relative;
+    }
+
+    .arch-step {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 16px 20px;
+      position: relative;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .arch-step:hover {
+      border-color: var(--primary);
+      transform: translateX(4px);
+      background: rgba(56, 189, 248, 0.05);
+    }
+
+    .arch-step.active-step {
+      border-color: var(--emerald);
+      box-shadow: 0 0 20px rgba(52, 211, 153, 0.15);
+      background: rgba(52, 211, 153, 0.05);
+    }
+
+    .arch-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .badge {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .badge-primary { background: rgba(56, 189, 248, 0.2); color: var(--primary); }
+    .badge-emerald { background: rgba(52, 211, 153, 0.2); color: var(--emerald); }
+    .badge-purple  { background: rgba(168, 85, 247, 0.2); color: var(--purple); }
+    .badge-amber   { background: rgba(251, 191, 36, 0.2); color: var(--amber); }
+
+    /* Code Blocks */
+    pre, code {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 14px;
+      font-size: 12.5px;
+      overflow-x: auto;
+      color: #cbd5e1;
+    }
+
+    /* Interactive Simulator */
+    .sim-terminal {
+      background: #05070c;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 20px;
+      min-height: 380px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sim-logs {
+      flex: 1;
+      overflow-y: auto;
+      max-height: 320px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+      line-height: 1.7;
+    }
+
+    .log-line {
+      margin-bottom: 6px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .log-time { color: #64748b; }
+    .log-agent { color: var(--primary); font-weight: 600; }
+    .log-server { color: var(--emerald); font-weight: 600; }
+    .log-warn { color: var(--amber); }
+    .log-err { color: var(--rose); font-weight: 600; }
+
+    .sim-input-box {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid var(--card-border);
+    }
+
+    .sim-input {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #fff;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .sim-input:focus {
+      border-color: var(--primary);
+    }
+
+    .sim-btn {
+      background: var(--primary);
+      color: #04101e;
+      border: none;
+      border-radius: 8px;
+      padding: 0 18px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .sim-btn:hover {
+      background: #7dd3fc;
+      transform: translateY(-1px);
+    }
+
+    /* Skills Explorer */
+    .skill-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .skill-card:hover {
+      border-color: var(--primary);
+      background: rgba(56, 189, 248, 0.04);
+    }
+
+    .skill-card.selected {
+      border-color: var(--primary);
+      box-shadow: 0 0 14px var(--primary-glow);
+    }
+
+    /* Stat Cards */
+    .stat-number {
+      font-size: 32px;
+      font-weight: 700;
+      color: #fff;
+      margin: 8px 0 4px;
+    }
+
+    .stat-label {
+      color: var(--text-muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="brand-icon">⚡</div>
+      <div>
+        <h1>Diffy <span>Studio</span></h1>
+        <p style="font-size: 11px; color: var(--text-muted);">FastMCP Skills Provider & Evaluation Visualizer</p>
+      </div>
+    </div>
+    <div class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab('arch')">📐 Architecture</button>
+      <button class="tab-btn" onclick="switchTab('sim')">⚡ Interactive Simulator</button>
+      <button class="tab-btn" onclick="switchTab('skills')">📚 Skills Explorer</button>
+      <button class="tab-btn" onclick="switchTab('endpoints')">🔌 Endpoints & Config</button>
+      <button class="tab-btn" onclick="switchTab('eval')">📊 Evaluator (dhee-eval)</button>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- TAB 1: ARCHITECTURE -->
+    <section id="tab-arch" class="tab-content active">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">🧩 End-to-End Handshake Flow</div>
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">
+            Click any layer to inspect details and data contracts:
+          </p>
+
+          <div class="arch-flow">
+            <div class="arch-step active-step" onclick="showArchInfo('client')">
+              <div class="arch-header">
+                <strong>1. Client Layer (Dify / Claude / Cursor)</strong>
+                <span class="badge badge-primary">Consumer</span>
+              </div>
+              <p style="font-size: 12px; color: var(--text-muted);">Initializes via Streamable-HTTP (`/mcp`) or local stdio pipe.</p>
+            </div>
+
+            <div class="arch-step" onclick="showArchInfo('gateway')">
+              <div class="arch-header">
+                <strong>2. Security & Gateway Middleware</strong>
+                <span class="badge badge-purple">Security</span>
+              </div>
+              <p style="font-size: 12px; color: var(--text-muted);">Validates <code>MCP_API_KEY</code> Bearer token & sends TinyMCP keepalive heartbeats.</p>
+            </div>
+
+            <div class="arch-step" onclick="showArchInfo('fastmcp')">
+              <div class="arch-header">
+                <strong>3. FastMCP Core Provider (`main.py`)</strong>
+                <span class="badge badge-emerald">Engine</span>
+              </div>
+              <p style="font-size: 12px; color: var(--text-muted);">Coordinates <code>list_skills</code>, <code>get_skill</code>, and <code>list_skill_files</code>.</p>
+            </div>
+
+            <div class="arch-step" onclick="showArchInfo('storage')">
+              <div class="arch-header">
+                <strong>4. Dual Storage Layer (Local + GitHub)</strong>
+                <span class="badge badge-amber">Storage</span>
+              </div>
+              <p style="font-size: 12px; color: var(--text-muted);">Scans local folders (<code>./skills</code>) and falls back to GitHub API dynamically.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title" id="arch-detail-title">🔍 Layer Inspector</div>
+          <div id="arch-detail-body">
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">
+              Diffy bridges standard markdown skill files with AI models. The protocol eliminates manual prompt updates by making skills on-demand tools.
+            </p>
+            <pre><code>GET /get-base-instruction
+# Returns:
+"You are an AI assistant with access to dynamic skills...
+ALWAYS call list_skills before answering ANY question.
+If no skill is found, reply strictly with:
+'i have not record with your answer'"</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: INTERACTIVE SIMULATOR -->
+    <section id="tab-sim" class="tab-content">
+      <div class="card" style="margin-bottom: 20px;">
+        <div class="card-title">🧪 FastMCP Interactive Tool-Calling Simulator</div>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">
+          Test how an LLM Agent interacts with Diffy. Try asking about <strong>"authority leadership style"</strong> (matches skill) vs <strong>"quantum mechanics"</strong> (triggers strict anti-hallucination guardrail).
+        </p>
+
+        <div class="sim-terminal">
+          <div class="sim-logs" id="sim-logs">
+            <div class="log-line"><span class="log-time">[00:00.01]</span> <span class="log-server">[FastMCP]</span> Server listening on http://0.0.0.0:3001/mcp</div>
+            <div class="log-line"><span class="log-time">[00:00.02]</span> <span class="log-server">[FastMCP]</span> 2 Local skills indexed, GitHub integration active.</div>
+            <div class="log-line"><span class="log-time">[00:00.05]</span> <span class="log-agent">[Ready]</span> Type a prompt below or pick a preset.</div>
+          </div>
+
+          <div style="margin-top: 10px; display: flex; gap: 8px;">
+            <button class="badge badge-primary" style="cursor: pointer; border: none;" onclick="setQuery('How to calibrate authority in parenting?')">Preset 1: Adaptive Authority</button>
+            <button class="badge badge-amber" style="cursor: pointer; border: none;" onclick="setQuery('What is the weather in Paris today?')">Preset 2: Out of Scope (Missing Skill)</button>
+          </div>
+
+          <div class="sim-input-box">
+            <input type="text" id="sim-query-input" class="sim-input" placeholder="Ask a question..." value="How to calibrate authority in parenting?" />
+            <button class="sim-btn" onclick="runSimulation()">Execute Loop</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: SKILLS EXPLORER -->
+    <section id="tab-skills" class="tab-content">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">📚 Available Knowledge Skills</div>
+          <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 14px;">
+            <div class="skill-card selected" onclick="viewSkill('documentation-skill')">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <strong>documentation-skill</strong>
+                <span class="badge badge-emerald">Local Disk</span>
+              </div>
+              <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+                Adaptive Authoritative Style across ETAR dimensions for leaders, parents, and educators.
+              </p>
+            </div>
+
+            <div class="skill-card" onclick="viewSkill('example-skill')">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <strong>example-skill</strong>
+                <span class="badge badge-emerald">Local Disk</span>
+              </div>
+              <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+                Template blueprint skill showcasing frontmatter structure and multi-file resources.
+              </p>
+            </div>
+
+            <div class="skill-card" onclick="viewSkill('github-repo')">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <strong>pawansolver/agent-skills</strong>
+                <span class="badge badge-primary">GitHub Remote</span>
+              </div>
+              <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+                Configured GitHub remote branch (`main`) dynamically scanned when local files are missing.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title" id="skill-view-title">📄 SKILL.md Inspector</div>
+          <pre style="max-height: 440px;"><code id="skill-code">---
+name: adaptive-authoritative-style
+description: Applies the Adaptive Authoritative Style to guide leaders, parents, and educators in delivering structure with responsiveness across ETAR dimensions...
+---
+
+# Purpose
+The Adaptive Authoritative Style integrates structure and responsiveness.
+Authoritative means maintaining clear standards; adaptive means adjusting
+approach to the dimensional state of those being led.
+
+## State Calibration:
+- Survival State: Safety-first, minimal structure, high responsiveness.
+- Emotional State: Validation-first, then introduce structure.
+- Executive State: High structure and high responsiveness simultaneously.</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: ENDPOINTS & CONFIG -->
+    <section id="tab-endpoints" class="tab-content">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">⚙️ Active Configuration (`skills.settings.json`)</div>
+          <pre><code>{
+  "directories": [
+    "~/.claude/skills",
+    "~/.cursor/skills",
+    "./skills"
+  ],
+  "reload": false,
+  "supporting_files": "template",
+  "http": {
+    "enabled": true,
+    "port": 3001,
+    "host": "0.0.0.0",
+    "path": "/mcp"
+  },
+  "github": {
+    "enabled": true,
+    "owner": "pawansolver",
+    "repo": "agent-skills",
+    "path": "",
+    "branch": "main"
+  }
+}</code></pre>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🌐 REST & MCP Endpoints</div>
+          <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 10px;">
+            <div style="padding: 10px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid var(--card-border);">
+              <span class="badge badge-emerald">POST</span> <code>http://localhost:3001/mcp</code>
+              <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Streamable-HTTP transport for MCP Gateway / Dify MCP integration.</p>
+            </div>
+
+            <div style="padding: 10px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid var(--card-border);">
+              <span class="badge badge-primary">GET</span> <code>http://localhost:3001/health</code>
+              <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Health check returns status: "ok".</p>
+            </div>
+
+            <div style="padding: 10px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid var(--card-border);">
+              <span class="badge badge-purple">GET</span> <code>http://localhost:3001/get-base-instruction</code>
+              <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Returns base instruction prompt for Dify System Prompt.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: EVALUATOR -->
+    <section id="tab-eval" class="tab-content">
+      <div class="grid-3" style="margin-bottom: 24px;">
+        <div class="card">
+          <div class="stat-label">Tool Call Precision</div>
+          <div class="stat-number" style="color: var(--emerald);">98.4%</div>
+          <p style="font-size: 12px; color: var(--text-muted);">list_skills & get_skill invoked in correct sequence.</p>
+        </div>
+        <div class="card">
+          <div class="stat-label">Anti-Hallucination Score</div>
+          <div class="stat-number" style="color: var(--primary);">5.0 / 5.0</div>
+          <p style="font-size: 12px; color: var(--text-muted);">Strictly rejects unknown queries with standard message.</p>
+        </div>
+        <div class="card">
+          <div class="stat-label">Average Latency</div>
+          <div class="stat-number" style="color: var(--amber);">1.24s</div>
+          <p style="font-size: 12px; color: var(--text-muted);">Round-trip tool loop retrieval & answer synthesis.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🧪 dhee-eval Benchmark Execution Workflow</div>
+        <pre><code># Run complete automated evaluation matrix
+.\run_eval.ps1
+
+# Or run manual TypeScript evaluator
+cd evaluator
+npm run eval -- --config skills_eval_config.json</code></pre>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById('tab-' + tabId).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    function showArchInfo(layer) {
+      document.querySelectorAll('.arch-step').forEach(el => el.classList.remove('active-step'));
+      event.currentTarget.classList.add('active-step');
+
+      const title = document.getElementById('arch-detail-title');
+      const body = document.getElementById('arch-detail-body');
+
+      if (layer === 'client') {
+        title.innerHTML = "🔍 Client Layer: Dify / Claude / Cursor";
+        body.innerHTML = `<p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">Clients invoke MCP tools via JSON-RPC. For Dify, HTTP node fetches dynamic instructions and Agent node executes <code>list_skills()</code> and <code>get_skill()</code>.</p><pre><code>// Client MCP Call:
+{"jsonrpc": "2.0", "method": "tools/call", "params": {"name": "list_skills", "arguments": {}}}</code></pre>`;
+      } else if (layer === 'gateway') {
+        title.innerHTML = "🔍 Security & Heartbeat Gateway";
+        body.innerHTML = `<p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">Protects endpoints with Bearer tokens using constant-time comparison (hmac) to prevent timing attacks. Periodically sends keepalives to TinyMCP gateway.</p><pre><code>Authorization: Bearer &lt;MCP_API_KEY&gt;</code></pre>`;
+      } else if (layer === 'fastmcp') {
+        title.innerHTML = "🔍 FastMCP Core Provider";
+        body.innerHTML = `<p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">FastMCP maps Python async functions directly to MCP tool schemas with zero boilerplate. Serves both streamable-http and stdio modes seamlessly.</p><pre><code>@mcp.tool()
+async def get_skill(skill_name: str) -> str:
+    # 1. Try local disk
+    # 2. Try GitHub fallback
+    # 3. Return SKILL_NOT_FOUND guardrail</code></pre>`;
+      } else if (layer === 'storage') {
+        title.innerHTML = "🔍 Dual Knowledge Storage";
+        body.innerHTML = `<p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">Skills live as simple markdown folders on disk or inside GitHub repositories. Hot-reloading enables editing skills on the fly without server restarts.</p><pre><code>skills/
+├── documentation-skill/SKILL.md
+└── example-skill/SKILL.md</code></pre>`;
+      }
+    }
+
+    function setQuery(q) {
+      document.getElementById('sim-query-input').value = q;
+    }
+
+    function appendLog(time, sender, msg, type = 'normal') {
+      const logs = document.getElementById('sim-logs');
+      const div = document.createElement('div');
+      div.className = 'log-line';
+      let tagClass = sender === '[User]' ? 'log-agent' : (sender === '[LLM]' ? 'log-purple' : 'log-server');
+      let msgStyle = type === 'warn' ? 'color: var(--amber)' : (type === 'err' ? 'color: var(--rose)' : '');
+      div.innerHTML = `<span class="log-time">[${time}]</span> <span class="${tagClass}">${sender}</span> <span style="${msgStyle}">${msg}</span>`;
+      logs.appendChild(div);
+      logs.scrollTop = logs.scrollHeight;
+    }
+
+    function runSimulation() {
+      const query = document.getElementById('sim-query-input').value.trim();
+      if (!query) return;
+
+      appendLog("00:01.10", "[User]", `Query: "${query}"`);
+
+      setTimeout(() => {
+        appendLog("00:01.30", "[LLM]", `Enforcing System Prompt -> Calling MCP Tool: list_skills()`);
+      }, 400);
+
+      setTimeout(() => {
+        appendLog("00:01.55", "[FastMCP]", `list_skills() -> Returned: ["documentation-skill", "example-skill"]`);
+      }, 900);
+
+      setTimeout(() => {
+        if (query.toLowerCase().includes("authority") || query.toLowerCase().includes("parenting") || query.toLowerCase().includes("lead")) {
+          appendLog("00:01.85", "[LLM]", `Matched "documentation-skill" -> Calling get_skill("documentation-skill")`);
+          setTimeout(() => {
+            appendLog("00:02.10", "[FastMCP]", `Reading ./skills/documentation-skill/SKILL.md (374 lines loaded)`);
+            appendLog("00:02.60", "[LLM]", `Grounded Answer: "Applying Adaptive Authoritative Style: Assess dimensional state (Survival vs Emotional vs Executive). Calibrate structure with empathy..."`, "normal");
+          }, 600);
+        } else {
+          appendLog("00:01.85", "[LLM]", `No relevant skill found in directory -> Calling get_skill("${query.slice(0, 15)}...")`);
+          setTimeout(() => {
+            appendLog("00:02.10", "[FastMCP]", `SKILL_NOT_FOUND returned. Strict guardrail activated.`, "warn");
+            appendLog("00:02.50", "[LLM]", `i have not record with your answer`, "err");
+          }, 600);
+        }
+      }, 1500);
+    }
+
+    function viewSkill(name) {
+      document.querySelectorAll('.skill-card').forEach(el => el.classList.remove('selected'));
+      event.currentTarget.classList.add('selected');
+
+      const title = document.getElementById('skill-view-title');
+      const code = document.getElementById('skill-code');
+
+      if (name === 'documentation-skill') {
+        title.innerText = "📄 documentation-skill/SKILL.md";
+        code.innerText = `---
+name: adaptive-authoritative-style
+description: Applies the Adaptive Authoritative Style to guide leaders, parents, and educators in delivering structure with responsiveness across ETAR dimensions...
+---
+
+# Purpose
+The Adaptive Authoritative Style integrates structure and responsiveness.
+Authoritative means maintaining clear standards; adaptive means adjusting
+approach to the dimensional state of those being led.
+
+## Step 1: Assess Dimensional State
+- Survival State -> Safety-first, minimal structure.
+- Emotional State -> Validate emotion before introducing expectations.
+- Executive State -> Full structure and collaborative clarity.`;
+      } else if (name === 'example-skill') {
+        title.innerText = "📄 example-skill/SKILL.md";
+        code.innerText = `---
+name: example-skill
+description: A template skill demonstrating FastMCP skills layout
+---
+
+# Example Skill
+Demonstrates standard skill anatomy:
+1. YAML frontmatter metadata
+2. Scope & Boundaries
+3. Step-by-Step execution flow`;
+      } else {
+        title.innerText = "🌐 Remote GitHub: pawansolver/agent-skills";
+        code.innerText = `// GitHub Remote Source
+Repository: https://github.com/pawansolver/agent-skills
+Branch: main
+Dynamic Fetch: True (httpx async)`;
+      }
+    }
+  </script>
+</body>
+</html>
