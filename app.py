@@ -1,4 +1,4 @@
-"""
+﻿"""
 Hugging Face Spaces Entry Point for Diffy FastMCP Server
 (No Gradio - FastAPI only, no port conflict)
 """
@@ -72,11 +72,11 @@ async def index():
   <h1>Diffy FastMCP Server</h1>
   <p class="sub">Autonomous MCP Microservice running on Hugging Face Spaces</p>
   <div class="label">MCP Endpoint (for Open WebUI)</div>
-  <div class="ep">https://pawan11112-diffyproject.hf.space/mcp</div>
+  <div class="ep">http://15.135.138.107:7860/mcp</div>
   <div class="label">Health Check</div>
-  <div class="ep">https://pawan11112-diffyproject.hf.space/health</div>
+  <div class="ep">http://15.135.138.107:7860/health</div>
   <div class="label">Base System Instruction (for Dify)</div>
-  <div class="ep">https://pawan11112-diffyproject.hf.space/get-base-instruction</div>
+  <div class="ep">http://15.135.138.107:7860/get-base-instruction</div>
 </div>
 </body>
 </html>""")

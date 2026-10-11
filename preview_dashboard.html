@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>fluAi + Diffy FastMCP — Optimized Unified Architecture & Live Preview</title>
+  <title>fluAi + Diffy FastMCP â€” Optimized Unified Architecture & Live Preview</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
@@ -691,7 +691,7 @@
   <!-- Top Header -->
   <header>
     <div class="brand">
-      <div class="brand-logo">⚡</div>
+      <div class="brand-logo">âš¡</div>
       <div>
         <div class="brand-title">fluAi + Diffy FastMCP</div>
         <div class="brand-sub">Unified System Architecture & Operational Live Preview</div>
@@ -707,11 +707,11 @@
 
   <!-- Navigation Tabs -->
   <div class="tabs-bar">
-    <button class="tab-btn active" onclick="setTab('arch')">🗺️ 1. Architecture Topology</button>
-    <button class="tab-btn" onclick="setTab('sim')">⚡ 2. Live Tool Simulator</button>
-    <button class="tab-btn" onclick="setTab('components')">🧩 3. Components & Use Cases</button>
-    <button class="tab-btn" onclick="setTab('integration')">🔗 4. Protocol & Integration Bridge</button>
-    <button class="tab-btn" onclick="setTab('benchmark')">📊 5. RAG vs MCP Benchmark</button>
+    <button class="tab-btn active" onclick="setTab('arch')">ðŸ—ºï¸ 1. Architecture Topology</button>
+    <button class="tab-btn" onclick="setTab('sim')">âš¡ 2. Live Tool Simulator</button>
+    <button class="tab-btn" onclick="setTab('components')">ðŸ§© 3. Components & Use Cases</button>
+    <button class="tab-btn" onclick="setTab('integration')">ðŸ”— 4. Protocol & Integration Bridge</button>
+    <button class="tab-btn" onclick="setTab('benchmark')">ðŸ“Š 5. RAG vs MCP Benchmark</button>
   </div>
 
   <main>
@@ -720,7 +720,7 @@
     <div id="pane-arch" class="tab-pane active">
       <div class="glass-card">
         <div class="card-title">
-          <span>🏛️ Complete 5-Tier Distributed Architecture</span>
+          <span>ðŸ›ï¸ Complete 5-Tier Distributed Architecture</span>
           <span style="font-size: 0.8rem; font-weight: 500; color: var(--cyan); font-family: var(--font-mono);">Sub-Second Tool Calling Pipeline</span>
         </div>
         <div class="card-desc">
@@ -792,7 +792,7 @@
         <!-- Deep Inspector Box -->
         <div class="inspector-box" id="tier-inspector">
           <div class="inspector-header">
-            <div class="inspector-title" id="insp-title">📱 Tier 1: Client Experience (Android APK & Responsive Web)</div>
+            <div class="inspector-title" id="insp-title">ðŸ“± Tier 1: Client Experience (Android APK & Responsive Web)</div>
             <span class="mini-pill" id="insp-latency">Latency: ~50ms Origin</span>
           </div>
           <p id="insp-desc" style="font-size: 0.9rem; color: #cbd5e1; margin-bottom: 14px;">
@@ -818,7 +818,7 @@
     <div id="pane-sim" class="tab-pane">
       <div class="glass-card">
         <div class="card-title">
-          <span>⚡ Live Two-Turn Tool Call Flow Simulator</span>
+          <span>âš¡ Live Two-Turn Tool Call Flow Simulator</span>
           <span style="font-size: 0.8rem; font-weight: 500; color: var(--emerald); font-family: var(--font-mono);">Interactive Microsecond Packet Tracer</span>
         </div>
         <div class="card-desc">
@@ -831,7 +831,7 @@
             <option value="flutter_skill">Prompt 2: "Explain our Flutter Clean Architecture guidelines" (Triggers: get_skill('flutter'))</option>
             <option value="unknown_prompt">Prompt 3: "Tell me quantum physics theory" (No skill found -> Fallback Guardrail)</option>
           </select>
-          <button id="btn-run-sim" class="btn-run" onclick="startSimulation()">▶ Run Live Simulation</button>
+          <button id="btn-run-sim" class="btn-run" onclick="startSimulation()">â–¶ Run Live Simulation</button>
         </div>
 
         <div class="grid-2">
@@ -873,7 +873,7 @@
                 <div class="step-main">
                   <div class="step-head"><span class="step-title">Gateway Dispatches JSON-RPC 2.0</span><span class="step-time">T = +320 ms</span></div>
                   <div class="step-desc">fluAi mcp_executor.py Diffy FastMCP Server ko HTTP POST bhejta hai.</div>
-                  <div class="step-packet">POST https://diffy-ax7l.onrender.com/mcp -> {"method": "tools/call", "params": {"name": "list_skills"}}</div>
+                  <div class="step-packet">POST http://15.135.138.107:7860/mcp -> {"method": "tools/call", "params": {"name": "list_skills"}}</div>
                 </div>
               </div>
 
@@ -919,7 +919,7 @@
               </div>
               <div class="terminal-body" id="sim-terminal-logs">
                 <div class="log-row"><span class="log-ts">[00:00.00]</span> <span class="log-tag-gw">[GATEWAY]</span> fluAi Core Gateway initialized on port 8080.</div>
-                <div class="log-row"><span class="log-ts">[00:00.02]</span> <span class="log-tag-gw">[CONFIG]</span> Auto-injected TOOL_SERVER_CONNECTION: Diffy Skills (https://diffy-ax7l.onrender.com/mcp)</div>
+                <div class="log-row"><span class="log-ts">[00:00.02]</span> <span class="log-tag-gw">[CONFIG]</span> Auto-injected TOOL_SERVER_CONNECTION: Diffy Skills (http://15.135.138.107:7860/mcp)</div>
                 <div class="log-row"><span class="log-ts">[00:00.05]</span> <span class="log-tag-mcp">[FASTMCP]</span> Diffy FastMCP online. 3 skills registered. GitHub sync active.</div>
                 <div class="log-row"><span class="log-ts">[00:00.08]</span> <span class="log-tag-groq">[INFERENCE]</span> Groq Cloud LPU connection pool warmed up (openai/gpt-oss-120b).</div>
                 <div class="log-row"><span class="log-ts">[--:--.--]</span> <span class="log-tag-user">[SYSTEM]</span> Ready. Click "Run Live Simulation" to observe packet flow.</div>
@@ -934,7 +934,7 @@
     <div id="pane-components" class="tab-pane">
       <div class="glass-card">
         <div class="card-title">
-          <span>🧩 Har Component Ka Asli Kaam (Real-World Use Cases)</span>
+          <span>ðŸ§© Har Component Ka Asli Kaam (Real-World Use Cases)</span>
           <span style="font-size: 0.8rem; font-weight: 500; color: var(--purple); font-family: var(--font-mono);">A to Z Blueprint</span>
         </div>
         <div class="card-desc">
@@ -946,14 +946,14 @@
           <div class="comp-card">
             <div>
               <div class="comp-header">
-                <div class="comp-title">📱 Android Native APK</div>
+                <div class="comp-title">ðŸ“± Android Native APK</div>
                 <span class="mini-pill">Capacitor</span>
               </div>
               <div class="comp-usecase">
                 <strong>Asli Kaam:</strong> Mobile phone par native app experience dena. User ke microphone se direct speech capture karke Whisper STT ko bhejna bina permissions crash ke.
               </div>
               <div class="comp-opt">
-                ⚡ <strong>Optimization:</strong> <code>https://localhost</code> secure origin use karta hai jisse browser media security pass ho jati hai.
+                âš¡ <strong>Optimization:</strong> <code>https://localhost</code> secure origin use karta hai jisse browser media security pass ho jati hai.
               </div>
             </div>
             <div class="comp-path">llm-main/android/ &amp; src/lib/constants.ts</div>
@@ -963,14 +963,14 @@
           <div class="comp-card">
             <div>
               <div class="comp-header">
-                <div class="comp-title">💻 SvelteKit Web App</div>
+                <div class="comp-title">ðŸ’» SvelteKit Web App</div>
                 <span class="mini-pill">SvelteKit 2</span>
               </div>
               <div class="comp-usecase">
                 <strong>Asli Kaam:</strong> Desktop aur tablet users ke liye responsive real-time interface. Real-time token streaming, Markdown render aur KaTeX math formula display.
               </div>
               <div class="comp-opt">
-                ⚡ <strong>Optimization:</strong> Zero virtual-DOM overhead, ultra-fast Svelte reactivity and lightweight CSS bundle.
+                âš¡ <strong>Optimization:</strong> Zero virtual-DOM overhead, ultra-fast Svelte reactivity and lightweight CSS bundle.
               </div>
             </div>
             <div class="comp-path">llm-main/src/</div>
@@ -980,14 +980,14 @@
           <div class="comp-card">
             <div>
               <div class="comp-header">
-                <div class="comp-title">🚀 FastAPI Core Gateway</div>
+                <div class="comp-title">ðŸš€ FastAPI Core Gateway</div>
                 <span class="mini-pill">FastAPI / ASGI</span>
               </div>
               <div class="comp-usecase">
                 <strong>Asli Kaam:</strong> Central Traffic Controller. User JWT authentication, rate limiting, chat sessions aur multi-provider routing ka management.
               </div>
               <div class="comp-opt">
-                ⚡ <strong>Optimization:</strong> Asynchronous non-blocking I/O (Uvicorn), high concurrent request handling with sub-40ms overhead.
+                âš¡ <strong>Optimization:</strong> Asynchronous non-blocking I/O (Uvicorn), high concurrent request handling with sub-40ms overhead.
               </div>
             </div>
             <div class="comp-path">llm-main/backend/open_webui/main.py</div>
@@ -997,14 +997,14 @@
           <div class="comp-card">
             <div>
               <div class="comp-header">
-                <div class="comp-title">🔌 MCP Executor Bridge</div>
+                <div class="comp-title">ðŸ”Œ MCP Executor Bridge</div>
                 <span class="mini-pill">Python Async</span>
               </div>
               <div class="comp-usecase">
-                <strong>Asli Kaam:</strong> LLM Function Calls ko Model Context Protocol (MCP) standards me translate karna. Name matching (`diffy__list_skills` ↔ `list_skills`).
+                <strong>Asli Kaam:</strong> LLM Function Calls ko Model Context Protocol (MCP) standards me translate karna. Name matching (`diffy__list_skills` â†” `list_skills`).
               </div>
               <div class="comp-opt">
-                ⚡ <strong>Optimization:</strong> 4-way fallback name resolution (exact, legacy, double underscore, suffix) + 30s timeout guard.
+                âš¡ <strong>Optimization:</strong> 4-way fallback name resolution (exact, legacy, double underscore, suffix) + 30s timeout guard.
               </div>
             </div>
             <div class="comp-path">llm-main/backend/.../providers/mcp_executor.py</div>
@@ -1014,14 +1014,14 @@
           <div class="comp-card">
             <div>
               <div class="comp-header">
-                <div class="comp-title">⚡ Diffy FastMCP Server</div>
+                <div class="comp-title">âš¡ Diffy FastMCP Server</div>
                 <span class="mini-pill">FastMCP Protocol</span>
               </div>
               <div class="comp-usecase">
                 <strong>Asli Kaam:</strong> On-demand skills provider microservice. Model ko tools deta hai: `list_skills`, `get_skill`, `list_skill_files`.
               </div>
               <div class="comp-opt">
-                ⚡ <strong>Optimization:</strong> Tiny memory footprint (&lt;80MB RAM), standard JSON-RPC 2.0 over SSE transport.
+                âš¡ <strong>Optimization:</strong> Tiny memory footprint (&lt;80MB RAM), standard JSON-RPC 2.0 over SSE transport.
               </div>
             </div>
             <div class="comp-path">diffy-main/main.py</div>
@@ -1031,14 +1031,14 @@
           <div class="comp-card">
             <div>
               <div class="comp-header">
-                <div class="comp-title">🐙 GitHub Live Sync</div>
+                <div class="comp-title">ðŸ™ GitHub Live Sync</div>
                 <span class="mini-pill">HTTPX Async</span>
               </div>
               <div class="comp-usecase">
                 <strong>Asli Kaam:</strong> Local folder ke alawa kisi bhi GitHub repository se real-time me naye `SKILL.md` load karna bina server redeploy kiye.
               </div>
               <div class="comp-opt">
-                ⚡ <strong>Optimization:</strong> Zero-downtime updates. GitHub repo me commit karo, agle second AI us skill ko use karne lagega.
+                âš¡ <strong>Optimization:</strong> Zero-downtime updates. GitHub repo me commit karo, agle second AI us skill ko use karne lagega.
               </div>
             </div>
             <div class="comp-path">diffy-main/config.py &amp; main.py</div>
@@ -1048,14 +1048,14 @@
           <div class="comp-card">
             <div>
               <div class="comp-header">
-                <div class="comp-title">⚡ Groq Cloud LPU Tier</div>
+                <div class="comp-title">âš¡ Groq Cloud LPU Tier</div>
                 <span class="mini-pill">Custom ASIC LPU</span>
               </div>
               <div class="comp-usecase">
                 <strong>Asli Kaam:</strong> World's fastest AI text &amp; speech compute. Function calling evaluation, turn-2 reasoning synthesis aur Whisper speech-to-text.
               </div>
               <div class="comp-opt">
-                ⚡ <strong>Optimization:</strong> 500+ tokens/second. Traditional GPU (3-5 sec) ke mukable response **700ms** me screen par hota hai.
+                âš¡ <strong>Optimization:</strong> 500+ tokens/second. Traditional GPU (3-5 sec) ke mukable response **700ms** me screen par hota hai.
               </div>
             </div>
             <div class="comp-path">Cloud Provider: Groq API (openai/gpt-oss-120b)</div>
@@ -1065,14 +1065,14 @@
           <div class="comp-card">
             <div>
               <div class="comp-header">
-                <div class="comp-title">💾 Neon PostgreSQL / SQLite</div>
+                <div class="comp-title">ðŸ’¾ Neon PostgreSQL / SQLite</div>
                 <span class="mini-pill">Postgres / SQLite</span>
               </div>
               <div class="comp-usecase">
                 <strong>Asli Kaam:</strong> Users, hashed passwords, chat histories, active sessions aur access control rules ko permanently store karna.
               </div>
               <div class="comp-opt">
-                ⚡ <strong>Optimization:</strong> Serverless autoscaling with connection pooling in cloud; zero-dependency fallback to local `webui.db`.
+                âš¡ <strong>Optimization:</strong> Serverless autoscaling with connection pooling in cloud; zero-dependency fallback to local `webui.db`.
               </div>
             </div>
             <div class="comp-path">llm-main/backend/open_webui/internal/db.py</div>
@@ -1082,14 +1082,14 @@
           <div class="comp-card">
             <div>
               <div class="comp-header">
-                <div class="comp-title">📜 Instruction API</div>
+                <div class="comp-title">ðŸ“œ Instruction API</div>
                 <span class="mini-pill">FastAPI</span>
               </div>
               <div class="comp-usecase">
                 <strong>Asli Kaam:</strong> Dynamic system prompt compiler. External AI tools (like Dify) ke instructions box ko clean rakhna aur code-driven rules serve karna.
               </div>
               <div class="comp-opt">
-                ⚡ <strong>Optimization:</strong> Bearer token security + dynamic fallback rule injection.
+                âš¡ <strong>Optimization:</strong> Bearer token security + dynamic fallback rule injection.
               </div>
             </div>
             <div class="comp-path">diffy-main/instruction_api.py</div>
@@ -1102,7 +1102,7 @@
     <div id="pane-integration" class="tab-pane">
       <div class="glass-card">
         <div class="card-title">
-          <span>🔗 Under the Hood: Protocol Bridge &amp; Auto-Registration</span>
+          <span>ðŸ”— Under the Hood: Protocol Bridge &amp; Auto-Registration</span>
           <span style="font-size: 0.8rem; font-weight: 500; color: var(--cyan); font-family: var(--font-mono);">Zero-Config Secret Sauce</span>
         </div>
         <div class="card-desc">
@@ -1120,7 +1120,7 @@
               fluAi jab boot hota hai, yeh verify karta hai ki `TOOL_SERVER_CONNECTIONS` me Diffy present hai ya nahi. Agar nahi hai, toh yeh automatic injection karta hai:
             </p>
             <pre><code># config.py (Lines 72-85)
-diffy_url = os.getenv('DIFY_API_BASE_URL', 'https://diffy-ax7l.onrender.com').rstrip('/') + '/mcp'
+diffy_url = os.getenv('DIFY_API_BASE_URL', 'http://15.135.138.107:7860').rstrip('/') + '/mcp'
 diffy_conn = {
     'id': 'diffy',
     'info': {'id': 'diffy', 'name': 'Diffy Skills'},
@@ -1179,7 +1179,7 @@ if not has_diffy:
     <div id="pane-benchmark" class="tab-pane">
       <div class="glass-card">
         <div class="card-title">
-          <span>📊 Architectural Benchmark: Traditional RAG vs fluAi + Diffy MCP</span>
+          <span>ðŸ“Š Architectural Benchmark: Traditional RAG vs fluAi + Diffy MCP</span>
           <span style="font-size: 0.8rem; font-weight: 500; color: var(--emerald); font-family: var(--font-mono);">10x Efficiency Proof</span>
         </div>
         <div class="card-desc">
@@ -1198,33 +1198,33 @@ if not has_diffy:
           <tbody>
             <tr>
               <td><strong>End-to-End Latency</strong></td>
-              <td><span class="metric-badge badge-loss">3.5s – 7.0s</span></td>
-              <td><span class="metric-badge badge-win">0.6s – 0.9s (Sub-second)</span></td>
-              <td>⚡ <strong>5x-8x Faster</strong> user response</td>
+              <td><span class="metric-badge badge-loss">3.5s â€“ 7.0s</span></td>
+              <td><span class="metric-badge badge-win">0.6s â€“ 0.9s (Sub-second)</span></td>
+              <td>âš¡ <strong>5x-8x Faster</strong> user response</td>
             </tr>
             <tr>
               <td><strong>Prompt Token Overhead</strong></td>
-              <td><span class="metric-badge badge-loss">4,000 – 8,000 tokens/call</span></td>
+              <td><span class="metric-badge badge-loss">4,000 â€“ 8,000 tokens/call</span></td>
               <td><span class="metric-badge badge-win">0 tokens (until invoked)</span></td>
-              <td>💰 <strong>85% Cloud Cost Reduction</strong></td>
+              <td>ðŸ’° <strong>85% Cloud Cost Reduction</strong></td>
             </tr>
             <tr>
               <td><strong>Knowledge Freshness</strong></td>
               <td>Slow (Re-chunking, re-embedding, DB sync)</td>
               <td><span class="metric-badge badge-win">Instant (Zero-downtime file edit)</span></td>
-              <td>🚀 <strong>Instant Live Updates</strong></td>
+              <td>ðŸš€ <strong>Instant Live Updates</strong></td>
             </tr>
             <tr>
               <td><strong>Cross-Platform Support</strong></td>
               <td>Web Only / Mobile Web</td>
               <td><span class="metric-badge badge-win">Native Android APK + Modern Web</span></td>
-              <td>📱 <strong>Hardware Mic &amp; Speech Ready</strong></td>
+              <td>ðŸ“± <strong>Hardware Mic &amp; Speech Ready</strong></td>
             </tr>
             <tr>
               <td><strong>Protocol Standardization</strong></td>
               <td>Proprietary Vector Database APIs</td>
               <td><span class="metric-badge badge-win">Open MCP (Model Context Protocol)</span></td>
-              <td>🌐 <strong>Cursor, Claude &amp; fluAi Interoperable</strong></td>
+              <td>ðŸŒ <strong>Cursor, Claude &amp; fluAi Interoperable</strong></td>
             </tr>
           </tbody>
         </table>
@@ -1250,7 +1250,7 @@ if not has_diffy:
     // Tier Inspector Data
     const tierData = {
       client: {
-        title: "📱 Tier 1: Client Experience (Android APK & Responsive Web)",
+        title: "ðŸ“± Tier 1: Client Experience (Android APK & Responsive Web)",
         latency: "Latency: ~50ms Origin",
         desc: "<strong>Real-World Use Case:</strong> Mobile users direct Android app se baat karte hain. Hardware microphone se awaaz capture hoti hai aur Capacitor webview me <code>https://localhost</code> secure context ke through fluAi backend ko stream hoti hai.",
         code: `// android/app/src/main/assets/capacitor.config.json
@@ -1266,15 +1266,15 @@ if not has_diffy:
 // Enables hardware microphone audio capture via navigator.mediaDevices.getUserMedia()!`
       },
       gateway: {
-        title: "🚀 Tier 2: Orchestration Gateway (FastAPI & MCP Engine)",
+        title: "ðŸš€ Tier 2: Orchestration Gateway (FastAPI & MCP Engine)",
         latency: "Processing: ~35ms Non-blocking",
         desc: "<strong>Real-World Use Case:</strong> User request aate hi JWT token check karta hai, Diffy MCP server ke tools auto-register karta hai, aur Groq model ke sath tool execution loop manage karta hai.",
         code: `// backend/open_webui/routers/openai.py & config.py
-diffy_url = os.getenv('DIFY_API_BASE_URL', 'https://diffy-ax7l.onrender.com').rstrip('/') + '/mcp'
+diffy_url = os.getenv('DIFY_API_BASE_URL', 'http://15.135.138.107:7860').rstrip('/') + '/mcp'
 // Auto-injects Diffy tool declarations to LLM payload without any admin config!`
       },
       mcp: {
-        title: "⚡ Tier 3: Dynamic Knowledge (Diffy FastMCP Server)",
+        title: "âš¡ Tier 3: Dynamic Knowledge (Diffy FastMCP Server)",
         latency: "Discovery: ~110ms Local/GitHub",
         desc: "<strong>Real-World Use Case:</strong> Jab AI ko kisi skill (e.g. Flutter standards, Python rules) ki zaroorat hoti hai, Diffy on-demand SKILL.md read karke AI ko deta hai. Traditional RAG ki tarah prompt bloat nahi hota.",
         code: `// diffy-main/main.py
@@ -1284,7 +1284,7 @@ async def get_skill(skill_name: str) -> str:
     return await provider.read_resource(f"skill://{skill_name}/SKILL.md")`
       },
       inference: {
-        title: "⚡ Tier 4: Groq Cloud LPU Inference Engine",
+        title: "âš¡ Tier 4: Groq Cloud LPU Inference Engine",
         latency: "Generation: ~280ms (500+ tok/s)",
         desc: "<strong>Real-World Use Case:</strong> Text aur voice dono ko ultra-fast process karta hai. Whisper Large-v3 mic audio ko text banata hai aur Flagship 120B model reasoning karke response generate karta hai.",
         code: `// Groq LPU Compute Specs:
@@ -1293,7 +1293,7 @@ async def get_skill(skill_name: str) -> str:
 - Failover: Google Gemini 3.1 Flash (1M tokens context support)`
       },
       db: {
-        title: "💾 Tier 5: Persistence & State (Neon PostgreSQL / SQLite)",
+        title: "ðŸ’¾ Tier 5: Persistence & State (Neon PostgreSQL / SQLite)",
         latency: "Query: ~15ms Pooler",
         desc: "<strong>Real-World Use Case:</strong> User accounts, chat sessions, tool execution logs aur customized prompts ko ACID compliance ke sath save karta hai.",
         code: `// Database Schema & Connection Pooling
@@ -1323,13 +1323,13 @@ DATABASE_URL = os.getenv('DATABASE_URL', 'sqlite:///./webui.db')
       
       const btn = document.getElementById('btn-run-sim');
       btn.disabled = true;
-      btn.innerText = "⏳ Simulation in Progress...";
+      btn.innerText = "â³ Simulation in Progress...";
       
       const steps = [
         { id: "t-step-1", delay: 300, log: { tag: "USER", tagClass: "log-tag-user", msg: "User sent prompt: 'Show me all available skills in Diffy'." } },
         { id: "t-step-2", delay: 600, log: { tag: "GATEWAY", tagClass: "log-tag-gw", msg: "JWT valid. Auto-bound Diffy MCP tools [list_skills, get_skill, list_skill_files]." } },
         { id: "t-step-3", delay: 900, log: { tag: "GROQ-LPU", tagClass: "log-tag-groq", msg: "Turn 1: Model emitted function call -> diffy__list_skills()." } },
-        { id: "t-step-4", delay: 700, log: { tag: "GATEWAY", tagClass: "log-tag-gw", msg: "Forwarding JSON-RPC 2.0 to Diffy FastMCP at https://diffy-ax7l.onrender.com/mcp" } },
+        { id: "t-step-4", delay: 700, log: { tag: "GATEWAY", tagClass: "log-tag-gw", msg: "Forwarding JSON-RPC 2.0 to Diffy FastMCP at http://15.135.138.107:7860/mcp" } },
         { id: "t-step-5", delay: 800, log: { tag: "FASTMCP", tagClass: "log-tag-mcp", msg: "Diffy returned 3 skills from ./skills folder: [flutter, fastapi, security]." } },
         { id: "t-step-6", delay: 800, log: { tag: "GROQ-LPU", tagClass: "log-tag-groq", msg: "Turn 2: Synthesizing final answer at 520 tok/sec with skill payload." } },
         { id: "t-step-7", delay: 500, log: { tag: "CLIENT", tagClass: "log-tag-user", msg: "SSE stream rendered complete Markdown response to UI. Total elapsed: 780ms." } }
@@ -1363,7 +1363,7 @@ DATABASE_URL = os.getenv('DATABASE_URL', 'sqlite:///./webui.db')
       }
 
       btn.disabled = false;
-      btn.innerText = "▶ Run Live Simulation Again";
+      btn.innerText = "â–¶ Run Live Simulation Again";
       simRunning = false;
     }
   </script>
