@@ -48,12 +48,39 @@ class ApiKeyMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 
+BASE_SYSTEM_INSTRUCTION = """\
+You are an intelligent AI assistant with access to a dynamic skills library via MCP tools.
+
+You have 3 tools available:
+1. list_skills — Use this to discover all available skills
+2. get_skill — Use this to retrieve detailed instructions for a specific skill
+3. list_skill_files — Use this to see all files within a skill
+
+## How to use skills:
+- When a user asks something that matches a skill topic, FIRST call list_skills to see what skills are available
+- Then call get_skill with the relevant skill name to load the full instructions
+- Follow the skill's instructions precisely when responding
+
+## Behavior Rules:
+- ALWAYS call list_skills before answering ANY question
+- If a relevant skill exists, follow its exact instructions and output format
+- If get_skill returns SKILL_NOT_FOUND or no skill matches — you are STRICTLY FORBIDDEN from using your general knowledge
+- When no skill is found, you MUST reply with ONLY this exact text: i have not record with your answer
+- DO NOT add any explanation, apology, or extra text when no skill is found
+- Never make up skill names — only use skills returned by list_skills tool
+- Always respond in the same language the user is writing in
+""".strip()
+
+
+_github_skills_cache = {"timestamp": 0.0, "data": []}
+_github_content_cache = {}
+
 class SkillsProviderServer:
     """FastMCP Skills Provider Server"""
 
     def __init__(self, config_file: str = "skills.settings.json"):
         self.config_loader = ConfigLoader(config_file)
-        self.mcp = FastMCP("Skills Provider")
+        self.mcp = FastMCP("Skills Provider", instructions=BASE_SYSTEM_INSTRUCTION)
         self._setup_providers()
 
     def _setup_providers(self):
@@ -86,7 +113,12 @@ class SkillsProviderServer:
         self._setup_tools(provider)
 
     async def _fetch_github_skills_list(self) -> List[Dict[str, str]]:
-        """Fetch list of skills from GitHub API"""
+        """Fetch list of skills from GitHub API (with 1h cache)"""
+        import time
+        now = time.time()
+        if _github_skills_cache["data"] and (now - _github_skills_cache["timestamp"] < 3600):
+            return _github_skills_cache["data"]
+
         gh = self.github_config
         api_url = f"https://api.github.com/repos/{gh.owner}/{gh.repo}/contents/{gh.path}"
         params = {"ref": gh.branch}
@@ -104,16 +136,19 @@ class SkillsProviderServer:
             for item in items:
                 if item.get("type") == "dir":
                     skill_name = item["name"]
-                    # Try to get description from SKILL.md frontmatter
-                    desc = await self._fetch_github_skill_description(skill_name)
-                    skills.append({"name": skill_name, "description": desc, "source": "github"})
+                    skills.append({"name": skill_name, "description": f"Skill: {skill_name} (from GitHub)", "source": "github"})
+            _github_skills_cache["timestamp"] = now
+            _github_skills_cache["data"] = skills
             return skills
         except Exception as e:
             logger.warning(f"GitHub skills fetch failed: {e}")
-            return []
+            return _github_skills_cache["data"] or []
 
-    async def _fetch_github_skill_description(self, skill_name: str) -> str:
-        """Fetch description from SKILL.md frontmatter in GitHub"""
+    async def _fetch_github_skill_content(self, skill_name: str) -> Optional[str]:
+        """Fetch SKILL.md content from GitHub for a specific skill (cached)"""
+        if skill_name in _github_content_cache:
+            return _github_content_cache[skill_name]
+
         gh = self.github_config
         api_url = f"https://api.github.com/repos/{gh.owner}/{gh.repo}/contents/{gh.path}/{skill_name}/SKILL.md"
         params = {"ref": gh.branch}
@@ -130,38 +165,8 @@ class SkillsProviderServer:
                 if download_url:
                     content_resp = await client.get(download_url)
                     content = content_resp.text
-                    # Parse YAML frontmatter for description
-                    if content.startswith("---"):
-                        end = content.find("---", 3)
-                        if end != -1:
-                            frontmatter = content[3:end]
-                            for line in frontmatter.splitlines():
-                                if line.strip().startswith("description:"):
-                                    return line.split("description:", 1)[1].strip()
-                    # Fallback: use skill name
-                    return f"Skill: {skill_name} (from GitHub)"
-        except Exception:
-            pass
-        return f"Skill: {skill_name} (from GitHub)"
-
-    async def _fetch_github_skill_content(self, skill_name: str) -> Optional[str]:
-        """Fetch SKILL.md content from GitHub for a specific skill"""
-        gh = self.github_config
-        api_url = f"https://api.github.com/repos/{gh.owner}/{gh.repo}/contents/{gh.path}/{skill_name}/SKILL.md"
-        params = {"ref": gh.branch}
-        headers = {"Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28"}
-        if gh.token:
-            headers["Authorization"] = f"Bearer {gh.token}"
-
-        try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                resp = await client.get(api_url, params=params, headers=headers)
-                resp.raise_for_status()
-                data = resp.json()
-                download_url = data.get("download_url", "")
-                if download_url:
-                    content_resp = await client.get(download_url)
-                    return content_resp.text
+                    _github_content_cache[skill_name] = content
+                    return content
         except Exception as e:
             logger.warning(f"GitHub skill content fetch failed for '{skill_name}': {e}")
         return None
@@ -188,26 +193,51 @@ class SkillsProviderServer:
     def _setup_tools(self, provider):
         @self.mcp.tool()
         async def list_skills() -> List[Dict[str, str]]:
-            """List all available skills from local directories and GitHub.
-
-            Returns a list of all skills from configured local directories
-            and optionally from a configured GitHub repository.
-            """
-            # 1. Get local skills
-            resources = await provider.list_resources()
+            """List all available skills from local directories and GitHub."""
             skills = {}
-            res_list = list(resources) if hasattr(resources, "__iter__") else []
-            for r in res_list:
-                uri = str(r.uri)
-                if uri.endswith("/SKILL.md"):
-                    skill_name = uri.split("skill://")[1].split("/")[0]
-                    skills[skill_name] = {"description": r.description or f"Skill: {skill_name}", "source": "local"}
+            SKILL_DIRS = [
+                Path(__file__).parent / "skills",
+                Path("./skills"),
+                Path("/app/skills"),
+                Path("/home/ubuntu/fluai-stack/diffy/skills"),
+                Path("C:/Users/pawan/Downloads/diffy-main/diffy-main/skills"),
+                Path("C:/Users/pawan/Downloads/diffy-main/skills"),
+            ]
+            for root_dir in SKILL_DIRS:
+                if root_dir.is_dir():
+                    for item in root_dir.iterdir():
+                        if item.is_dir() and (item / "SKILL.md").is_file():
+                            name = item.name
+                            desc = f"Skill: {name}"
+                            try:
+                                txt = (item / "SKILL.md").read_text(encoding="utf-8")
+                                if txt.startswith("---"):
+                                    end = txt.find("---", 3)
+                                    if end != -1:
+                                        for line in txt[3:end].splitlines():
+                                            if line.strip().startswith("description:"):
+                                                desc = line.split("description:", 1)[1].strip()
+                                                break
+                            except Exception:
+                                pass
+                            skills[name] = {"description": desc, "source": "local"}
 
-            # 2. Merge GitHub skills (if enabled)
+            try:
+                resources = await provider.list_resources()
+                res_list = list(resources) if hasattr(resources, "__iter__") else []
+                for r in res_list:
+                    uri = str(r.uri)
+                    if uri.endswith("/SKILL.md"):
+                        skill_name = uri.split("skill://")[1].split("/")[0]
+                        if skill_name not in skills:
+                            skills[skill_name] = {"description": r.description or f"Skill: {skill_name}", "source": "local"}
+            except Exception as e:
+                logger.warning(f"Error querying provider resources: {e}")
+
             if self.github_config.enabled:
                 github_skills = await self._fetch_github_skills_list()
                 for s in github_skills:
-                    if s["name"] not in skills:  # Local takes priority
+                    if s["name"] not in skills:
                         skills[s["name"]] = {"description": s["description"], "source": "github"}
 
             return [{"name": n, "description": v["description"], "source": v["source"]} for n, v in skills.items()]
@@ -215,7 +245,21 @@ class SkillsProviderServer:
         @self.mcp.tool()
         async def get_skill(skill_name: str) -> str:
             """Get skill content by name. Checks local first, then GitHub."""
-            # 1. Try local first
+            for root_dir in [
+                Path(__file__).parent / "skills",
+                Path("./skills"),
+                Path("/app/skills"),
+                Path("/home/ubuntu/fluai-stack/diffy/skills"),
+                Path("C:/Users/pawan/Downloads/diffy-main/diffy-main/skills"),
+                Path("C:/Users/pawan/Downloads/diffy-main/skills"),
+            ]:
+                skill_file = root_dir / skill_name / "SKILL.md"
+                if skill_file.is_file():
+                    try:
+                        return skill_file.read_text(encoding="utf-8")
+                    except Exception:
+                        pass
+
             uri = f"skill://{skill_name}/SKILL.md"
             try:
                 resource = await provider.get_resource(uri)
@@ -226,7 +270,6 @@ class SkillsProviderServer:
             except Exception:
                 pass
 
-            # 2. Try GitHub if enabled
             if self.github_config.enabled:
                 content = await self._fetch_github_skill_content(skill_name)
                 if content:
@@ -240,25 +283,39 @@ class SkillsProviderServer:
 
         @self.mcp.tool()
         async def list_skill_files(skill_name: str) -> List[str]:
-            """List all files in a skill (checks local first, then GitHub).
+            """List all files in a skill (checks local first, then GitHub)."""
+            for root_dir in [
+                Path(__file__).parent / "skills",
+                Path("./skills"),
+                Path("/app/skills"),
+                Path("/home/ubuntu/fluai-stack/diffy/skills"),
+                Path("C:/Users/pawan/Downloads/diffy-main/diffy-main/skills"),
+                Path("C:/Users/pawan/Downloads/diffy-main/skills"),
+            ]:
+                skill_dir = root_dir / skill_name
+                if skill_dir.is_dir():
+                    try:
+                        return [p.name for p in skill_dir.iterdir() if p.is_file()]
+                    except Exception:
+                        pass
 
-            Args:
-                skill_name: The name of the skill
-            """
-            # 1. Try local
-            resources = await provider.list_resources()
-            files = []
-            res_list = list(resources) if hasattr(resources, "__iter__") else []
-            for r in res_list:
-                uri = str(r.uri)
-                if uri.startswith(f"skill://{skill_name}/"):
-                    files.append(uri.split(f"skill://{skill_name}/")[1])
+            try:
+                resources = await provider.list_resources()
+                files = []
+                res_list = list(resources) if hasattr(resources, "__iter__") else []
+                for r in res_list:
+                    uri = str(r.uri)
+                    if uri.startswith(f"skill://{skill_name}/"):
+                        files.append(uri.split(f"skill://{skill_name}/")[1])
+                if files:
+                    return files
+            except Exception:
+                pass
 
-            # 2. If not found locally and GitHub is enabled, try GitHub
-            if not files and self.github_config.enabled:
-                files = await self._fetch_github_skill_files(skill_name)
+            if self.github_config.enabled:
+                return await self._fetch_github_skill_files(skill_name)
 
-            return files
+            return []
 
         logger.info("Skills tools added successfully")
         logger.info(f"Registered tools: list_skills, get_skill, list_skill_files")
@@ -368,8 +425,13 @@ def run_http_server(config_file: str, port: int, gateway_url: str = None):
     # This preserves all lifespan handlers that FastMCP sets up internally
     mcp_app = server_instance.mcp.http_app(path="/mcp")
 
-    # Inject custom routes at the front so they take priority
+    # Inject custom routes
     from starlette.routing import Route as StarletteRoute
+    mcp_route = next((r for r in mcp_app.router.routes if getattr(r, "path", "") == "/mcp"), None)
+    if mcp_route:
+        mcp_app.router.routes.append(
+            StarletteRoute("/mcp/", endpoint=mcp_route.endpoint, methods=["GET", "POST", "DELETE", "HEAD", "OPTIONS"])
+        )
     mcp_app.router.routes.insert(0, StarletteRoute("/health", health_endpoint, methods=["GET"]))
     mcp_app.router.routes.insert(1, StarletteRoute("/get-base-instruction", get_base_instruction_endpoint, methods=["GET"]))
     mcp_app.router.routes.insert(2, StarletteRoute("/get-default-user-prompt", get_default_user_prompt_endpoint, methods=["GET"]))

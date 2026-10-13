@@ -1,10 +1,10 @@
-﻿"""
-Hugging Face Spaces Entry Point for Diffy FastMCP Server
-(No Gradio - FastAPI only, no port conflict)
+"""
+Diffy FastMCP Server Entry Point
+Native Starlette + FastMCP (Local & GitHub Skills Provider)
 """
 import os
 import uvicorn
-from fastapi import FastAPI
+from starlette.routing import Route
 from starlette.responses import HTMLResponse
 
 from main import (
@@ -17,26 +17,23 @@ from main import (
 
 # Initialize FastMCP Skills Server
 server_instance = SkillsProviderServer("skills.settings.json")
-mcp_sub = server_instance.mcp.http_app(path="/")
 
-# Main FastAPI App with FastMCP lifespan
-app = FastAPI(
-    title="Diffy FastMCP Server",
-    lifespan=mcp_sub.lifespan,
+# FastMCP native Starlette HTTP app with streamable-http transport mounted at /mcp
+app = server_instance.mcp.http_app(path="/mcp")
+
+# Add exact matching route for /mcp/ so BOTH /mcp and /mcp/ work natively
+mcp_route = next(r for r in app.router.routes if getattr(r, "path", "") == "/mcp")
+app.router.routes.append(
+    Route("/mcp/", endpoint=mcp_route.endpoint, methods=["GET", "POST", "DELETE", "HEAD", "OPTIONS"])
 )
 
-# Custom Routes and Auth Middleware
-app.add_route("/health", health_endpoint, methods=["GET"])
-app.add_route("/get-base-instruction", get_base_instruction_endpoint, methods=["GET"])
-app.add_route("/get-default-user-prompt", get_default_user_prompt_endpoint, methods=["GET"])
-app.add_middleware(ApiKeyMiddleware)
+# Auxiliary API endpoints for Dify / Open WebUI integration
+app.router.routes.insert(0, Route("/health", health_endpoint, methods=["GET"]))
+app.router.routes.insert(1, Route("/get-base-instruction", get_base_instruction_endpoint, methods=["GET"]))
+app.router.routes.insert(2, Route("/get-default-user-prompt", get_default_user_prompt_endpoint, methods=["GET"]))
 
-# Mount FastMCP on /mcp
-app.mount("/mcp", mcp_sub)
-
-# Simple HTML status page at root (HF health check + browser UI)
-@app.get("/")
-async def index():
+# Landing page
+async def index_endpoint(request):
     return HTMLResponse("""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -70,16 +67,17 @@ async def index():
 <div class="card">
   <div class="badge"><div class="dot"></div> Server Online</div>
   <h1>Diffy FastMCP Server</h1>
-  <p class="sub">Autonomous MCP Microservice running on Hugging Face Spaces</p>
+  <p class="sub">Autonomous MCP Skills Microservice</p>
   <div class="label">MCP Endpoint (for Open WebUI)</div>
-  <div class="ep">http://15.135.138.107:7860/mcp</div>
+  <div class="ep">http://diffy:7860/mcp (or /mcp/)</div>
   <div class="label">Health Check</div>
-  <div class="ep">http://15.135.138.107:7860/health</div>
-  <div class="label">Base System Instruction (for Dify)</div>
-  <div class="ep">http://15.135.138.107:7860/get-base-instruction</div>
+  <div class="ep">/health</div>
 </div>
 </body>
 </html>""")
+
+app.router.routes.insert(3, Route("/", index_endpoint, methods=["GET"]))
+app.add_middleware(ApiKeyMiddleware)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 7860))
