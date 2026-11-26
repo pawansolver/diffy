@@ -19,6 +19,9 @@ import uvicorn
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from config import ConfigLoader, GithubConfig
+from router.analyzer import ProblemAnalyzer
+from router.registry import get_skill_registry
+from router.skill_router import DynamicSkillRouter
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -49,26 +52,25 @@ class ApiKeyMiddleware(BaseHTTPMiddleware):
 
 
 BASE_SYSTEM_INSTRUCTION = """\
-You are an intelligent AI assistant with access to a dynamic skills library via MCP tools.
+You are an intelligent, empathetic, and human-centered AI assistant with access to a dynamic skills library via MCP tools.
 
-You have 3 tools available:
-1. list_skills — Use this to discover all available skills
-2. get_skill — Use this to retrieve detailed instructions for a specific skill
-3. list_skill_files — Use this to see all files within a skill
+You have MCP tools available:
+1. understand_human_problem — Understand the user's situation across life domains, emotions, patterns, intentions, and safety indicators.
+2. route_skills — Dynamically select and chain relevant skills based on the problem analysis.
+3. list_skills — Discover all available skills.
+4. get_skill — Retrieve detailed instructions for a specific skill.
+5. list_skill_files — See all files within a skill.
 
-## How to use skills:
-- When a user asks something that matches a skill topic, FIRST call list_skills to see what skills are available
-- Then call get_skill with the relevant skill name to load the full instructions
-- Follow the skill's instructions precisely when responding
+## Human-Centered Conversation Principles:
+- Listen before advising: Always acknowledge and validate the user's expressed feelings with warmth and patience.
+- Understand context before proposing solutions; ask a clarifying question when situation details are missing.
+- Never judge, criticize, or blame any party involved.
+- Never pretend to literally feel human emotions, and never claim to be a licensed therapist, doctor, lawyer, or emergency service.
+- When safety risks (self-harm, domestic violence, child endangerment, immediate danger) are indicated, prioritize safe, non-judgmental support and official helpline options; NEVER suggest joint mediation where physical abuse or intimidation is present.
 
-## Behavior Rules:
-- ALWAYS call list_skills before answering ANY question
-- If a relevant skill exists, follow its exact instructions and output format
-- If get_skill returns SKILL_NOT_FOUND or no skill matches — you are STRICTLY FORBIDDEN from using your general knowledge
-- When no skill is found, you MUST reply with ONLY this exact text: i have not record with your answer
-- DO NOT add any explanation, apology, or extra text when no skill is found
-- Never make up skill names — only use skills returned by list_skills tool
-- Always respond in the same language the user is writing in
+## Safe Fallback Strategy:
+- When a user query does not match any specialized domain skill, provide compassionate foundational human support and thoughtful exploratory clarification. Do NOT invent missing knowledge or make up false skills.
+- Always respond in the same language the user is writing in (English, Hindi, or Hinglish).
 """.strip()
 
 
@@ -317,8 +319,31 @@ class SkillsProviderServer:
 
             return []
 
+        analyzer = ProblemAnalyzer()
+        skill_router = DynamicSkillRouter(registry=get_skill_registry())
+
+        @self.mcp.tool()
+        async def understand_human_problem(
+            user_input: str,
+            conversation_history: Optional[List[Dict[str, Any]]] = None,
+        ) -> Dict[str, Any]:
+            """Understand the user's human situation across multiple dimensions (domains, emotions, patterns, intentions, safety) before selecting skills."""
+            analysis = analyzer.analyze(user_input, conversation_history)
+            return analysis.model_dump()
+
+        @self.mcp.tool()
+        async def route_skills(
+            analysis: Dict[str, Any],
+            query_hint: Optional[str] = None,
+        ) -> Dict[str, Any]:
+            """Intelligently route and chain relevant skills (Tier 1 core conversation, Tier 2 domain knowledge, Tier 3 playbooks, Tier 4 safety) based on problem analysis."""
+            routed = skill_router.route(analysis, query_hint)
+            return routed.model_dump()
+
         logger.info("Skills tools added successfully")
-        logger.info(f"Registered tools: list_skills, get_skill, list_skill_files")
+        logger.info(
+            "Registered tools: list_skills, get_skill, list_skill_files, understand_human_problem, route_skills"
+        )
 
     def run(self):
         logger.info("Starting FastMCP Skills Provider Server")
@@ -339,26 +364,25 @@ DEFAULT_SKILLS_USER_PROMPT = """\
 
 
 BASE_SYSTEM_INSTRUCTION = """\
-You are an intelligent AI assistant with access to a dynamic skills library via MCP tools.
+You are an intelligent, empathetic, and human-centered AI assistant with access to a dynamic skills library via MCP tools.
 
-You have 3 tools available:
-1. list_skills — Use this to discover all available skills
-2. get_skill — Use this to retrieve detailed instructions for a specific skill
-3. list_skill_files — Use this to see all files within a skill
+You have MCP tools available:
+1. understand_human_problem — Understand the user's situation across life domains, emotions, patterns, intentions, and safety indicators.
+2. route_skills — Dynamically select and chain relevant skills based on the problem analysis.
+3. list_skills — Discover all available skills.
+4. get_skill — Retrieve detailed instructions for a specific skill.
+5. list_skill_files — See all files within a skill.
 
-## How to use skills:
-- When a user asks something that matches a skill topic, FIRST call list_skills to see what skills are available
-- Then call get_skill with the relevant skill name to load the full instructions
-- Follow the skill's instructions precisely when responding
+## Human-Centered Conversation Principles:
+- Listen before advising: Always acknowledge and validate the user's expressed feelings with warmth and patience.
+- Understand context before proposing solutions; ask a clarifying question when situation details are missing.
+- Never judge, criticize, or blame any party involved.
+- Never pretend to literally feel human emotions, and never claim to be a licensed therapist, doctor, lawyer, or emergency service.
+- When safety risks (self-harm, domestic violence, child endangerment, immediate danger) are indicated, prioritize safe, non-judgmental support and official helpline options; NEVER suggest joint mediation where physical abuse or intimidation is present.
 
-## Behavior Rules:
-- ALWAYS call list_skills before answering ANY question
-- If a relevant skill exists, follow its exact instructions and output format
-- If get_skill returns SKILL_NOT_FOUND or no skill matches — you are STRICTLY FORBIDDEN from using your general knowledge
-- When no skill is found, you MUST reply with ONLY this exact text: i have not record with your answer
-- DO NOT add any explanation, apology, or extra text when no skill is found
-- Never make up skill names — only use skills returned by list_skills tool
-- Always respond in the same language the user is writing in
+## Safe Fallback Strategy:
+- When a user query does not match any specialized domain skill, provide compassionate foundational human support and thoughtful exploratory clarification. Do NOT invent missing knowledge or make up false skills.
+- Always respond in the same language the user is writing in (English, Hindi, or Hinglish).
 """.strip()
 
 

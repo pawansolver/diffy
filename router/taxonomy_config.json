@@ -1,0 +1,146 @@
+{
+  "version": "1.0.0",
+  "name": "HumanProblemTaxonomy",
+  "description": "Configurable multi-dimensional taxonomy for human problem understanding with multilingual support (English, Hindi, Hinglish).",
+  "life_domains": {
+    "individual_emotional_support": {
+      "label": "Individual Emotional Support",
+      "description": "Personal emotional distress, loneliness, self-worth, anxiety, or burnout experienced as an individual.",
+      "keywords": ["lonely", "hopeless", "sad", "anxious", "depressed", "burnout", "overwhelmed", "akelapan", "udaas", "dukhi", "chinta", "stress", "pareshan", "ro raha", "khali lag raha", "depression", "anxiety", "exhausted"]
+    },
+    "marriage_and_relationships": {
+      "label": "Marriage and Intimate Relationships",
+      "description": "Communication breakdown, emotional disconnect, unmet expectations, or friction between spouses/romantic partners.",
+      "keywords": ["husband", "wife", "spouse", "partner", "marriage", "marital", "pati", "patni", "shaadi", "rishta", "ladai", "jhagda", "divorce", "taana", "pyaar nahi", "ignore kar raha", "baat nahi sunta", "misunderstanding"]
+    },
+    "parenting": {
+      "label": "Parenting and Child Guidance",
+      "description": "Parental strategies, routines, discipline, developmental stages, and child caregiving guidance.",
+      "keywords": ["parenting", "baby", "toddler", "child routine", "feeding", "upbringing", "bacche", "parvarish", "bachpan", "sanskaar", "shishu"]
+    },
+    "parent_child_conflicts": {
+      "label": "Parent-Child Conflicts",
+      "description": "Behavioral friction, defiance, screen addiction, academic pressure, or boundary clashes between parents and children.",
+      "keywords": ["child", "son", "daughter", "teenager", "rebellion", "tantrum", "screentime", "mobile", "padhai", "marks", "beta", "beti", "chilla raha", "baat nahi maanta", "phone nahi chhod raha", "gaming", "exam stress", "defiance"]
+    },
+    "joint_family": {
+      "label": "Joint & Extended Family Dynamics",
+      "description": "Generational hierarchy, in-law dynamics (saas-bahu), elder care, and autonomy clashes in shared family living.",
+      "keywords": ["in-laws", "mother-in-law", "father-in-law", "daughter-in-law", "joint family", "saas", "bahu", "sasural", "maike", "bhabhi", "jethani", "devrani", "taane", "privacy", "buzurg", "sanskar", "family interference"]
+    },
+    "residential_communities": {
+      "label": "Residential & Neighborhood Communities",
+      "description": "Living friction between neighbors, flat owners, tenants, RWAs over noise, parking, pets, or shared spaces.",
+      "keywords": ["neighbor", "neighbour", "flat", "apartment", "society", "rwa", "parking", "noise", "loud music", "padosi", "upar wale", "neeche wale", "shor", "kutte", "maintenance", "kachra", "leakage", "gali"]
+    },
+    "workplace_relationships": {
+      "label": "Workplace & Professional Relationships",
+      "description": "Office interpersonal politics, toxic boss dynamics, peer rivalry, appraisal friction, or career burnout.",
+      "keywords": ["boss", "manager", "colleague", "coworker", "office", "workplace", "job", "career", "team", "appraisal", "toxic manager", "office politics", "naukri", "kaam ka pressure", "resignation"]
+    },
+    "civic_and_political_dialogue": {
+      "label": "Civic, Social & Political Dialogue",
+      "description": "Polarization, ideological arguments, caste/cultural tension, and community disagreements over public issues.",
+      "keywords": ["politics", "political", "party", "election", "ideology", "religion", "caste", "neta", "bhashan", "samaj", "jaati", "dharma", "whatsapp group debate", "polarization", "desh"]
+    },
+    "financial_and_social_pressure": {
+      "label": "Financial & Social Status Pressure",
+      "description": "Debt, property division, peer comparison, lifestyle inflation, and social shame ('log kya kahenge').",
+      "keywords": ["money", "debt", "loan", "property", "inheritance", "paisa", "karza", "udhaar", "zameen", "hissa", "batwara", "dikhava", "log kya kahenge", "shaadi ka kharcha", "financial crisis", "dowry"]
+    },
+    "other_or_unknown": {
+      "label": "Other or Unknown Human Life Situation",
+      "description": "Emergent, novel, uncategorized, or open-ended human life situations requiring exploratory discovery.",
+      "keywords": []
+    }
+  },
+  "people_involved": {
+    "self_individual": ["myself", "i am", "me", "main", "mera", "meri", "khud", "alone"],
+    "spouse_partner": ["husband", "wife", "partner", "fiance", "pati", "patni", "girlfriend", "boyfriend", "spouse"],
+    "child_teenager": ["son", "daughter", "child", "kid", "teenager", "beta", "beti", "baccha", "bacche"],
+    "parents": ["father", "mother", "dad", "mom", "papa", "mummy", "maa", "pitaji", "parents"],
+    "in_laws": ["mother-in-law", "father-in-law", "in-laws", "saas", "sasur", "bahu", "damad", "sasural"],
+    "siblings": ["brother", "sister", "bhai", "behen", "sibling", "bhaiya", "didi"],
+    "neighbors_community": ["neighbor", "neighbour", "society", "rwa", "padosi", "flatmate", "committee"],
+    "coworkers_boss": ["manager", "boss", "colleague", "teammate", "client", "office mate"]
+  },
+  "problem_patterns": {
+    "pursuer_distancer_loop": {
+      "label": "Pursuer-Distancer Conflict Loop",
+      "keywords": ["withdraws", "silent treatment", "chup ho jata", "peeche hatna", "shouting", "chilla kar bhagna", "avoids", "stonewalling"]
+    },
+    "blame_defensiveness_spiral": {
+      "label": "Blame-Defensiveness Spiral",
+      "keywords": ["always blames", "meri galti", "apna dosh", "defensive", "counter-attack", "ilzam", "har baat par ladna"]
+    },
+    "boundary_invasion": {
+      "label": "Boundary Invasion and Over-Control",
+      "keywords": ["interferes", "controls", "hadd paar", "rok-tok", "privacy nahi", "no space", "overbearing", "har baat me dakhal"]
+    },
+    "generational_value_clash": {
+      "label": "Generational & Cultural Value Clash",
+      "keywords": ["purani soch", "modern thinking", "traditional", "generation gap", "naye zamane", "sanskar vs freedom"]
+    },
+    "scarcity_insecurity_conflict": {
+      "label": "Scarcity & Resource Insecurity Conflict",
+      "keywords": ["money fight", "property batwara", "paisa nahi diya", "resource sharing", "udhar nahi lautaya"]
+    },
+    "status_social_pressure": {
+      "label": "Social Status & Peer Comparison Pressure",
+      "keywords": ["log kya kahenge", "relatives judging", "status", "izzat", "shame", "comparisons", "sharma ji ka beta"]
+    },
+    "authority_rebellion_friction": {
+      "label": "Authority vs. Autonomy Rebellion",
+      "keywords": ["rebellion", "rules todna", "rebel", "doesn't listen", "hukum chalana", "dictatorship", "manmani"]
+    },
+    "unspoken_resentment_burnout": {
+      "label": "Unspoken Resentment & Emotional Burnout",
+      "keywords": ["chupchaap sahna", "bottled up", "thak chuka", "andar hi andar", "bojh", "unappreciated", "sacrifice unnoticed"]
+    },
+    "ideological_polarization": {
+      "label": "Ideological & Political Polarization",
+      "keywords": ["political fight", "fanatic", "party debate", "blind follower", "nafrat", "hate debate", "intolerance"]
+    }
+  },
+  "emotional_signals": {
+    "unacknowledged_hurt": ["hurt", "chot", "dard", "dil toota", "broken", "unseen", "koi kadar nahi"],
+    "defensive_anger": ["angry", "gussa", "irritated", "frustrated", "rage", "aag babula", "krodh"],
+    "anxious_overwhelm": ["anxious", "panic", "ghabrahat", "chinta", "restless", "bechain", "overwhelmed"],
+    "helpless_exhaustion": ["helpless", "exhausted", "thak gaya", "haar gaya", "no energy", "kuch nahi ho sakta"],
+    "loneliness_isolation": ["lonely", "alone", "akela", "tanha", "isolated", "nobody to talk", "koi apna nahi"],
+    "shame_guilt": ["guilt", "shame", "sharminda", "pachtawa", "regret", "apne aap se nafrat"],
+    "insecurity_fear": ["fear", "scared", "darr", "asuraksha", "insecure", "losing everything", "chhoot jane ka darr"],
+    "betrayal_distrust": ["betrayed", "dhokha", "trust broken", "vishwasghat", "cheated", "jhoot", "peeth me chhura"]
+  },
+  "user_intentions": {
+    "venting_and_containment": ["just want to vent", "mann halka", "sun lo koi", "bursting", "listen to me"],
+    "seeking_clarity": ["why is this happening", "kya karu", "samajh nahi aa raha", "confused", "need perspective"],
+    "de_escalation_guidance": ["how to calm down", "shant kaise karu", "stop fighting", "suljhana hai", "peace"],
+    "concrete_action_strategy": ["what should i do next", "action step", "tips", "solution batao", "practical plan"],
+    "mediation_prep": ["talk to both of us", "mediator ban jao", "dono ko samjhao", "settle this dispute"],
+    "crisis_support": ["cannot survive this", "save me", "emergency", "bahut bura ho jayega", "help immediately"]
+  },
+  "safety_indicators": {
+    "self_harm": {
+      "keywords": ["suicide", "kill myself", "end my life", "mar jana chahta", "jeene ka mann nahi", "want to die", "cut myself", "khatam kar lu", "neend ki goliya", "hanging", "sucide"],
+      "severity": "critical",
+      "action": "immediate_crisis_protocol"
+    },
+    "domestic_violence": {
+      "keywords": ["beats me", "hit me", "slapped", "maar-peet", "haath uthaya", "physical abuse", "choke", "threatened to kill me", "jaan se maar dunga", "locking me inside", "bandh kar rakha"],
+      "severity": "critical",
+      "action": "safety_planning_no_joint_mediation"
+    },
+    "child_safeguarding": {
+      "keywords": ["beating the baby", "hit my child with belt", "child abuse", "touching child inappropriately", "bacche ko pitta", "bacche ko mara", "starving the child"],
+      "severity": "critical",
+      "action": "child_safeguarding_protocol"
+    },
+    "threats_and_immediate_danger": {
+      "keywords": ["i will kill him", "goli maar dunga", "chaku", "knife", "bomb", "i will destroy them", "jaan se maar duga"],
+      "severity": "critical",
+      "action": "danger_deescalation_and_boundary"
+    }
+  }
+}
+
