@@ -1,5 +1,13 @@
 {
   "providers": {
+    "diffy_agent": {
+      "base_url": "http://127.0.0.1:3001/v1",
+      "api_key_env": "MCP_API_KEY",
+      "extra_headers": {
+        "X-Eval-User-Id": "eval_runner_user",
+        "X-Channel": "eval"
+      }
+    },
     "openai": {
       "base_url": "https://api.openai.com/v1",
       "api_key_env": "OPENAI_API_KEY",
@@ -15,6 +23,11 @@
     }
   },
   "models": [
+    {
+      "id": "diffy-agent",
+      "label": "diffy-agent (Unified Orchestrator)",
+      "provider": "diffy_agent"
+    },
     {
       "id": "gpt-4o-mini",
       "label": "gpt-4o-mini",

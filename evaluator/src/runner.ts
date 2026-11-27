@@ -25,7 +25,7 @@ export async function runOne(
 ): Promise<RunResult> {
   const prov = getProvider(cfg, provider);
   const key = providerKey(prov);
-  if (!key) {
+  if (!key && provider !== "diffy_agent") {
     throw new Error(
       `No API key for provider '${provider}' (set ${prov.api_key_env || "its api_key"}).`,
     );

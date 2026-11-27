@@ -35,10 +35,12 @@ export async function chatCompletion(opts: ChatOptions): Promise<any> {
 
   const url = `${baseUrl}/chat/completions`;
   const headers: Record<string, string> = {
-    [authHeader]: `${authScheme}${apiKey}`,
     "Content-Type": "application/json",
     ...(extraHeaders || {}),
   };
+  if (apiKey) {
+    headers[authHeader] = `${authScheme}${apiKey}`;
+  }
   const body: any = { model, messages, temperature };
   if (tools && tools.length) {
     body.tools = tools;

@@ -122,22 +122,22 @@
   },
   "safety_indicators": {
     "self_harm": {
-      "keywords": ["suicide", "kill myself", "end my life", "mar jana chahta", "jeene ka mann nahi", "want to die", "cut myself", "khatam kar lu", "neend ki goliya", "hanging", "sucide"],
+      "keywords": ["suicide", "kill myself", "end my life", "mar jana chahta", "jeene ka mann nahi", "want to die", "cut myself", "khatam kar lu", "neend ki goliya", "hanging", "sucide", "आत्महत्या", "खुदकुशी", "मर जाना चाहता"],
       "severity": "critical",
       "action": "immediate_crisis_protocol"
     },
     "domestic_violence": {
-      "keywords": ["beats me", "hit me", "slapped", "maar-peet", "haath uthaya", "physical abuse", "choke", "threatened to kill me", "jaan se maar dunga", "locking me inside", "bandh kar rakha"],
+      "keywords": ["beat me", "beats me", "beating me", "hit me", "slap me", "slapped", "maar-peet", "mar peet", "haath uthaya", "physical abuse", "choke", "choked", "strangle", "threatened to kill me", "jaan se maar", "locked me in", "locking me inside", "bandh kar rakha", "domestic violence", "gharelu hinsa", "घरेलू हिंसा", "मारपीट", "दहेज"],
       "severity": "critical",
       "action": "safety_planning_no_joint_mediation"
     },
     "child_safeguarding": {
-      "keywords": ["beating the baby", "hit my child with belt", "child abuse", "touching child inappropriately", "bacche ko pitta", "bacche ko mara", "starving the child"],
+      "keywords": ["beating the baby", "hit my child with belt", "beat my child", "child abuse", "touching child inappropriately", "bacche ko pitta", "bacche ko mara", "starving the child"],
       "severity": "critical",
       "action": "child_safeguarding_protocol"
     },
     "threats_and_immediate_danger": {
-      "keywords": ["i will kill him", "goli maar dunga", "chaku", "knife", "bomb", "i will destroy them", "jaan se maar duga"],
+      "keywords": ["i will kill him", "i will kill her", "goli maar dunga", "chaku", "knife", "bomb", "i will destroy them", "jaan se maar duga"],
       "severity": "critical",
       "action": "danger_deescalation_and_boundary"
     }

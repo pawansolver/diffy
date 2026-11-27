@@ -7,30 +7,11 @@ import uvicorn
 from starlette.routing import Route
 from starlette.responses import HTMLResponse
 
-from main import (
-    SkillsProviderServer,
-    health_endpoint,
-    get_base_instruction_endpoint,
-    get_default_user_prompt_endpoint,
-    ApiKeyMiddleware,
-)
+from main import SkillsProviderServer, build_http_app
 
-# Initialize FastMCP Skills Server
+# Initialize FastMCP Skills Server & Unified Agent API
 server_instance = SkillsProviderServer("skills.settings.json")
-
-# FastMCP native Starlette HTTP app with streamable-http transport mounted at /mcp
-app = server_instance.mcp.http_app(path="/mcp")
-
-# Add exact matching route for /mcp/ so BOTH /mcp and /mcp/ work natively
-mcp_route = next(r for r in app.router.routes if getattr(r, "path", "") == "/mcp")
-app.router.routes.append(
-    Route("/mcp/", endpoint=mcp_route.endpoint, methods=["GET", "POST", "DELETE", "HEAD", "OPTIONS"])
-)
-
-# Auxiliary API endpoints for Dify / Open WebUI integration
-app.router.routes.insert(0, Route("/health", health_endpoint, methods=["GET"]))
-app.router.routes.insert(1, Route("/get-base-instruction", get_base_instruction_endpoint, methods=["GET"]))
-app.router.routes.insert(2, Route("/get-default-user-prompt", get_default_user_prompt_endpoint, methods=["GET"]))
+app = build_http_app(server_instance)
 
 # Landing page
 async def index_endpoint(request):
@@ -39,7 +20,7 @@ async def index_endpoint(request):
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Diffy FastMCP Server</title>
+<title>Diffy Agent API & FastMCP Server</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -66,18 +47,21 @@ async def index_endpoint(request):
 <body>
 <div class="card">
   <div class="badge"><div class="dot"></div> Server Online</div>
-  <h1>Diffy FastMCP Server</h1>
-  <p class="sub">Autonomous MCP Skills Microservice</p>
-  <div class="label">MCP Endpoint (for Open WebUI)</div>
-  <div class="ep">http://diffy:7860/mcp (or /mcp/)</div>
+  <h1>Diffy Agent API & FastMCP Server</h1>
+  <p class="sub">Unified Orchestrator, Neon Memory & Skills Microservice</p>
+  <div class="label">Agent API Endpoint</div>
+  <div class="ep">POST /v1/chat/completions</div>
+  <div class="label">Device Pairing</div>
+  <div class="ep">POST /v1/devices/pair</div>
+  <div class="label">MCP Endpoint</div>
+  <div class="ep">/mcp</div>
   <div class="label">Health Check</div>
   <div class="ep">/health</div>
 </div>
 </body>
 </html>""")
 
-app.router.routes.insert(3, Route("/", index_endpoint, methods=["GET"]))
-app.add_middleware(ApiKeyMiddleware)
+app.router.routes.insert(len(app.router.routes) - 1, Route("/", index_endpoint, methods=["GET"]))
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 7860))

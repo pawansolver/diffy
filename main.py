@@ -2,23 +2,30 @@
 
 import asyncio
 import hmac
+import json
 import logging
 import os
 import sys
 import threading
 import time
+import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+from dotenv import load_dotenv
+load_dotenv(Path(__file__).resolve().parent / ".env")
 
 import httpx
 from fastmcp import FastMCP
 from fastmcp.server.providers.skills import SkillsDirectoryProvider
 from starlette.requests import Request
-from starlette.responses import JSONResponse, PlainTextResponse
+from starlette.responses import JSONResponse, PlainTextResponse, StreamingResponse
 import uvicorn
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from agent.orchestrator import get_agent_orchestrator
 from config import ConfigLoader, GithubConfig
+from memory.pg_memory import get_memory_manager
 from router.analyzer import ProblemAnalyzer
 from router.registry import get_skill_registry
 from router.skill_router import DynamicSkillRouter
@@ -30,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 
 class ApiKeyMiddleware(BaseHTTPMiddleware):
-    """Protect HTTP MCP and instruction routes when MCP_API_KEY is configured."""
+    """Protect HTTP MCP, Agent API, and instruction routes when MCP_API_KEY is configured."""
 
     async def dispatch(self, request: Request, call_next):
         if request.url.path == "/health":
@@ -40,7 +47,15 @@ class ApiKeyMiddleware(BaseHTTPMiddleware):
         if not expected_key:
             return await call_next(request)
 
+        # Allow per-device paired tokens (`fluai_dev_...`) only on chat/models Agent API endpoints
+        device_token = request.headers.get("x-device-token", "").strip()
         authorization = request.headers.get("authorization", "")
+        if request.url.path in ("/v1/chat/completions", "/v1/models") and (
+            device_token.startswith("fluai_dev_")
+            or authorization.startswith("Bearer fluai_dev_")
+        ):
+            return await call_next(request)
+
         expected_header = f"Bearer {expected_key}"
         if not hmac.compare_digest(authorization, expected_header):
             return JSONResponse(
@@ -75,7 +90,8 @@ You have MCP tools available:
 
 
 _github_skills_cache = {"timestamp": 0.0, "data": []}
-_github_content_cache = {}
+_github_content_cache: Dict[str, Dict[str, Any]] = {}
+GITHUB_CONTENT_CACHE_TTL = int(os.getenv("GITHUB_SKILL_CACHE_TTL", "300"))
 
 class SkillsProviderServer:
     """FastMCP Skills Provider Server"""
@@ -113,6 +129,31 @@ class SkillsProviderServer:
         if self.github_config.enabled:
             logger.info(f"GitHub integration enabled: {self.github_config.owner}/{self.github_config.repo}")
         self._setup_tools(provider)
+        self._provider = provider
+
+    async def load_skill_markdown(self, skill_name: str) -> Optional[str]:
+        """Load SKILL.md content preferring GitHub (with TTL cache), falling back to local unless strict."""
+        if self.github_config.enabled:
+            content = await self._fetch_github_skill_content(skill_name)
+            if content:
+                return content
+
+        if os.getenv("DIFFY_GITHUB_ONLY_SKILLS", "false").lower() == "true":
+            return None
+
+        for root_dir in [
+            Path(__file__).parent / "skills",
+            Path("./skills"),
+            Path("/app/skills"),
+            Path("/home/ubuntu/fluai-stack/diffy/skills"),
+        ]:
+            skill_file = root_dir / skill_name / "SKILL.md"
+            if skill_file.is_file():
+                try:
+                    return skill_file.read_text(encoding="utf-8")
+                except Exception:
+                    pass
+        return None
 
     async def _fetch_github_skills_list(self) -> List[Dict[str, str]]:
         """Fetch list of skills from GitHub API (with 1h cache)"""
@@ -147,9 +188,11 @@ class SkillsProviderServer:
             return _github_skills_cache["data"] or []
 
     async def _fetch_github_skill_content(self, skill_name: str) -> Optional[str]:
-        """Fetch SKILL.md content from GitHub for a specific skill (cached)"""
-        if skill_name in _github_content_cache:
-            return _github_content_cache[skill_name]
+        """Fetch SKILL.md content from GitHub for a specific skill (TTL-cached)."""
+        now = time.time()
+        cached_entry = _github_content_cache.get(skill_name)
+        if cached_entry and (now - cached_entry.get("timestamp", 0.0) < GITHUB_CONTENT_CACHE_TTL):
+            return cached_entry.get("content")
 
         gh = self.github_config
         api_url = f"https://api.github.com/repos/{gh.owner}/{gh.repo}/contents/{gh.path}/{skill_name}/SKILL.md"
@@ -167,10 +210,12 @@ class SkillsProviderServer:
                 if download_url:
                     content_resp = await client.get(download_url)
                     content = content_resp.text
-                    _github_content_cache[skill_name] = content
+                    _github_content_cache[skill_name] = {"timestamp": now, "content": content}
                     return content
         except Exception as e:
             logger.warning(f"GitHub skill content fetch failed for '{skill_name}': {e}")
+            if cached_entry:
+                return cached_entry.get("content")
         return None
 
     async def _fetch_github_skill_files(self, skill_name: str) -> List[str]:
@@ -387,8 +432,176 @@ You have MCP tools available:
 
 
 async def health_endpoint(request: Request):
-    """Health check endpoint"""
-    return JSONResponse({"status": "ok", "message": "Skills MCP Server is running"})
+    """Health check endpoint reporting server + Neon Postgres memory readiness."""
+    mem = get_memory_manager()
+    return JSONResponse({
+        "status": "ok",
+        "message": "Diffy Agent API & Skills MCP Server is running",
+        "postgres_configured": mem.enabled,
+    })
+
+
+async def cache_refresh_endpoint(request: Request):
+    """Invalidate GitHub skill caches so updated skills load immediately."""
+    _github_skills_cache["timestamp"] = 0.0
+    _github_skills_cache["data"] = []
+    _github_content_cache.clear()
+    return JSONResponse({"status": "ok", "message": "GitHub skill caches cleared"})
+
+
+def _resolve_request_identity(request: Request, payload: Dict[str, Any], resolved_device: Optional[Dict[str, Any]] = None) -> tuple[str, str, str]:
+    """Resolve canonical (user_id, session_id, channel) from BFF/gateway headers only."""
+    if resolved_device:
+        user_id = resolved_device["user_id"]
+        channel = "speaker"
+        session_id = request.headers.get("x-session-id") or payload.get("session_id") or f"{user_id}:speaker"
+        return user_id, str(session_id), channel
+
+    webui_uid = request.headers.get("x-openwebui-user-id", "").strip()
+    if webui_uid:
+        chat_id = request.headers.get("x-openwebui-chat-id", "").strip()
+        session_id = chat_id or payload.get("session_id") or f"{webui_uid}:app"
+        return webui_uid, str(session_id), "app"
+
+    eval_uid = request.headers.get("x-eval-user-id", "").strip()
+    if eval_uid:
+        session_id = request.headers.get("x-session-id") or payload.get("session_id") or f"{eval_uid}:eval"
+        return eval_uid, str(session_id), "eval"
+
+    channel = request.headers.get("x-channel", "").strip() or payload.get("channel") or "app"
+    raw_user = str(payload.get("user") or "").strip()
+    if raw_user and raw_user != "default_user" and channel == "eval":
+        return raw_user, str(payload.get("session_id") or f"{raw_user}:eval"), "eval"
+
+    return "anonymous", str(payload.get("session_id") or f"anon:{uuid.uuid4().hex[:8]}"), str(channel)
+
+
+def build_http_app(server_instance: SkillsProviderServer):
+    """Build the unified Starlette app serving /mcp + Agent API (/v1/*) + /health."""
+    mem = get_memory_manager()
+    orchestrator = get_agent_orchestrator(skill_loader=server_instance.load_skill_markdown)
+
+    async def v1_models_endpoint(request: Request):
+        return JSONResponse({
+            "object": "list",
+            "data": [
+                {
+                    "id": "diffy-agent",
+                    "object": "model",
+                    "created": int(time.time()),
+                    "owned_by": "diffy-agent",
+                    "name": "Aether Human-Centered Agent (Diffy)",
+                }
+            ],
+        })
+
+    async def v1_chat_completions_endpoint(request: Request):
+        try:
+            payload = await request.json()
+        except Exception:
+            return JSONResponse({"error": {"message": "Invalid JSON body"}}, status_code=400)
+
+        resolved_device = None
+        dev_token = request.headers.get("x-device-token", "").strip()
+        auth_hdr = request.headers.get("authorization", "").strip()
+        if not dev_token and auth_hdr.startswith("Bearer fluai_dev_"):
+            dev_token = auth_hdr[7:].strip()
+
+        if dev_token:
+            resolved_device = await mem.resolve_device_user(dev_token)
+            if not resolved_device:
+                return JSONResponse({"error": {"message": "Invalid or revoked device token"}}, status_code=401)
+
+        user_id, session_id, channel = _resolve_request_identity(request, payload, resolved_device=resolved_device)
+        result = await orchestrator.handle_chat_completion(
+            payload=payload,
+            user_id=user_id,
+            session_id=session_id,
+            channel=channel,
+        )
+
+        if payload.get("stream"):
+            content = result["choices"][0]["message"]["content"]
+            cmpl_id = result["id"]
+            created = result["created"]
+            model = result["model"]
+
+            async def sse_gen():
+                chunk = {
+                    "id": cmpl_id,
+                    "object": "chat.completion.chunk",
+                    "created": created,
+                    "model": model,
+                    "choices": [{"index": 0, "delta": {"role": "assistant", "content": content}, "finish_reason": None}],
+                }
+                yield f"data: {json.dumps(chunk)}\n\n"
+                stop_chunk = {
+                    "id": cmpl_id,
+                    "object": "chat.completion.chunk",
+                    "created": created,
+                    "model": model,
+                    "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}],
+                }
+                yield f"data: {json.dumps(stop_chunk)}\n\n"
+                yield "data: [DONE]\n\n"
+
+            return StreamingResponse(sse_gen(), media_type="text/event-stream")
+
+        return JSONResponse(result)
+
+    async def v1_devices_pair_endpoint(request: Request):
+        try:
+            payload = await request.json()
+        except Exception:
+            return JSONResponse({"error": "Invalid JSON body"}, status_code=400)
+
+        device_id = str(payload.get("device_id") or "").strip()
+        user_id = str(payload.get("user_id") or request.headers.get("x-openwebui-user-id", "")).strip()
+        device_name = str(payload.get("device_name") or "ESP32 Speaker").strip()
+        if not device_id or not user_id or user_id == "default_user":
+            return JSONResponse({"error": "device_id and authenticated user_id are required"}, status_code=400)
+        try:
+            paired = await mem.pair_device(device_id=device_id, user_id=user_id, device_name=device_name)
+            return JSONResponse({"status": "paired", **paired})
+        except Exception as e:
+            return JSONResponse({"error": str(e)}, status_code=500)
+
+    async def v1_devices_resolve_endpoint(request: Request):
+        try:
+            payload = await request.json()
+        except Exception:
+            return JSONResponse({"error": "Invalid JSON body"}, status_code=400)
+        token = str(payload.get("device_token") or request.headers.get("x-device-token", "")).strip()
+        if not token:
+            return JSONResponse({"error": "device_token required"}, status_code=400)
+        resolved = await mem.resolve_device_user(token)
+        if not resolved:
+            return JSONResponse({"error": "Unknown or inactive device token"}, status_code=401)
+        return JSONResponse({"status": "ok", **resolved, "paired_at": str(resolved.get("paired_at", ""))})
+
+    mcp_app = server_instance.mcp.http_app(path="/mcp")
+    from starlette.routing import Route as StarletteRoute
+
+    mcp_route = next((r for r in mcp_app.router.routes if getattr(r, "path", "") == "/mcp"), None)
+    if mcp_route:
+        mcp_app.router.routes.append(
+            StarletteRoute("/mcp/", endpoint=mcp_route.endpoint, methods=["GET", "POST", "DELETE", "HEAD", "OPTIONS"])
+        )
+    custom_routes = [
+        StarletteRoute("/health", health_endpoint, methods=["GET"]),
+        StarletteRoute("/get-base-instruction", get_base_instruction_endpoint, methods=["GET"]),
+        StarletteRoute("/get-default-user-prompt", get_default_user_prompt_endpoint, methods=["GET"]),
+        StarletteRoute("/admin/cache/refresh", cache_refresh_endpoint, methods=["POST"]),
+        StarletteRoute("/v1/models", v1_models_endpoint, methods=["GET"]),
+        StarletteRoute("/v1/chat/completions", v1_chat_completions_endpoint, methods=["POST"]),
+        StarletteRoute("/v1/devices/pair", v1_devices_pair_endpoint, methods=["POST"]),
+        StarletteRoute("/v1/devices/resolve", v1_devices_resolve_endpoint, methods=["POST"]),
+    ]
+    for idx, rt in enumerate(custom_routes):
+        mcp_app.router.routes.insert(idx, rt)
+
+    mcp_app.add_middleware(ApiKeyMiddleware)
+    return mcp_app
 
 
 async def get_default_user_prompt_endpoint(request: Request):
@@ -445,23 +658,8 @@ def run_http_server(config_file: str, port: int, gateway_url: str = None):
         heartbeat_thread.start()
         logger.info(f"Heartbeat thread started (gateway: {gateway_host}:{gateway_port_num})")
 
-    # Get FastMCP's own Starlette app and inject our custom routes into it
-    # This preserves all lifespan handlers that FastMCP sets up internally
-    mcp_app = server_instance.mcp.http_app(path="/mcp")
-
-    # Inject custom routes
-    from starlette.routing import Route as StarletteRoute
-    mcp_route = next((r for r in mcp_app.router.routes if getattr(r, "path", "") == "/mcp"), None)
-    if mcp_route:
-        mcp_app.router.routes.append(
-            StarletteRoute("/mcp/", endpoint=mcp_route.endpoint, methods=["GET", "POST", "DELETE", "HEAD", "OPTIONS"])
-        )
-    mcp_app.router.routes.insert(0, StarletteRoute("/health", health_endpoint, methods=["GET"]))
-    mcp_app.router.routes.insert(1, StarletteRoute("/get-base-instruction", get_base_instruction_endpoint, methods=["GET"]))
-    mcp_app.router.routes.insert(2, StarletteRoute("/get-default-user-prompt", get_default_user_prompt_endpoint, methods=["GET"]))
-    mcp_app.add_middleware(ApiKeyMiddleware)
-
-    logger.info("Custom routes injected: /health, /get-base-instruction")
+    mcp_app = build_http_app(server_instance)
+    logger.info("Custom routes injected: /health, /v1/models, /v1/chat/completions, /v1/devices/pair")
     if os.getenv("MCP_API_KEY", "").strip():
         logger.info("HTTP bearer authentication enabled")
     else:
